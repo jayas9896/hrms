@@ -35,7 +35,10 @@
 				<div class="flex flex-col mx-auto gap-3 items-center">
 					<FrappeHRLogo class="h-8 w-8" />
 					<div class="text-3xl font-semibold text-gray-900 text-center">
-						{{ __("Login to Frappe HR") }}
+						{{ __("Login to Dhruvanta HRMS") }}
+					</div>
+					<div class="text-sm text-gray-500">
+						{{ __("Powered by Frappe HR") }}
 					</div>
 				</div>
 

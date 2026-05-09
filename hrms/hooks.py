@@ -1,7 +1,7 @@
 app_name = "hrms"
-app_title = "Frappe HR"
+app_title = "Dhruvanta HRMS"
 app_publisher = "Frappe Technologies Pvt. Ltd."
-app_description = "Modern HR and Payroll Software"
+app_description = "Modern HR and payroll software. Powered by Frappe HR"
 app_email = "contact@frappe.io"
 app_license = "GNU General Public License (v3)"
 required_apps = ["frappe/erpnext"]
@@ -13,7 +13,7 @@ add_to_apps_screen = [
 	{
 		"name": "hrms",
 		"logo": "/assets/hrms/images/frappe-hr-logo.svg",
-		"title": "Frappe HR",
+		"title": "Dhruvanta HRMS",
 		"route": "/desk/people",
 		"has_permission": "hrms.hr.utils.check_app_permission",
 	}

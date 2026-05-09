@@ -3,7 +3,10 @@
 		<div class="flex items-center space-x-1.5">
 			<a href="/desk/hr-setup" class="text-gray-600 hover:text-gray-700 flex items-center">
 				<FrappeHRLogo class="h-6 w-6 mr-2.5" />
-				Frappe HR
+				<span class="flex flex-col leading-tight">
+					<span class="font-medium text-gray-700">Dhruvanta HRMS</span>
+					<span class="text-xs text-gray-500">Powered by Frappe HR</span>
+				</span>
 			</a>
 			<FeatherIcon name="chevron-right" class="h-4 w-4" />
 			<span class="font-medium">Roster</span>

@@ -5,9 +5,14 @@
 				<div class="flex flex-col bg-white shadow-sm p-4">
 					<div class="flex flex-row justify-between items-center">
 						<div class="flex flex-row items-center gap-2">
-							<h2 class="text-xl font-bold text-gray-900">
-								{{ props.pageTitle || __("Frappe HR") }}
-							</h2>
+							<div>
+								<h2 class="text-xl font-bold text-gray-900">
+									{{ props.pageTitle || __("Dhruvanta HRMS") }}
+								</h2>
+								<p v-if="!props.pageTitle" class="text-xs text-gray-500">
+									{{ __("Powered by Frappe HR") }}
+								</p>
+							</div>
 						</div>
 						<div class="flex flex-row items-center gap-3 ml-auto">
 							<router-link

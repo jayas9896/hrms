@@ -24,10 +24,10 @@ export default defineConfig({
 			},
 			manifest: {
 				display: "standalone",
-				name: "Frappe HR",
-				short_name: "Frappe HR",
+				name: "Dhruvanta HRMS",
+				short_name: "Dhruvanta HRMS",
 				start_url: "/hrms",
-				description: "Everyday HR & Payroll operations at your fingertips",
+				description: "Everyday HR & Payroll operations. Powered by Frappe HR",
 				theme_color: "#ffffff",
 				icons: [
 					{
