@@ -100,6 +100,21 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertEqual(frappe.local.service_client["scopes"], ("hrms:employee.read",))
 		self.assertEqual(frappe.local.service_client["jti"], "jti-1")
 
+	def test_health_route_returns_json_response_from_hook(self) -> None:
+		frappe = FakeFrappe("/api/v1/service/hrms/health", "Bearer good")
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 200)
+		self.assertIn(b'"service":"dhruvanta-hrms"', response.data)
+		self.assertIn(b'"status":"ok"', response.data)
+
 
 if __name__ == "__main__":
 	unittest.main()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any, Callable
 
 from hrms.service_auth.route_policy import ServiceRoutePolicy, UnsupportedServiceRoute
@@ -13,10 +14,49 @@ from hrms.service_auth.verifier import (
 )
 
 
+def _http_exception_base() -> type[Exception]:
+	try:
+		from werkzeug.exceptions import HTTPException
+
+		return HTTPException
+	except ModuleNotFoundError:
+		return Exception
+
+
 class FrappeServiceAuthError(Exception):
 	def __init__(self, status_code: int, message: str) -> None:
 		super().__init__(message)
 		self.http_status_code = status_code
+
+
+class FrappeServiceResponse(_http_exception_base()):
+	def __init__(self, body: dict[str, Any], status_code: int = 200) -> None:
+		self.body = json.dumps(body, separators=(",", ":")).encode("utf-8")
+		self.status_code = status_code
+		try:
+			from werkzeug.wrappers import Response
+
+			super().__init__(
+				response=Response(
+					self.body,
+					status=status_code,
+					content_type="application/json",
+				)
+			)
+		except ModuleNotFoundError:
+			super().__init__(self.body.decode("utf-8"))
+
+	def get_response(self, environ: Any | None = None) -> Any:
+		try:
+			return super().get_response(environ)  # type: ignore[misc]
+		except AttributeError:
+			return _FallbackResponse(self.body, self.status_code)
+
+
+class _FallbackResponse:
+	def __init__(self, data: bytes, status_code: int) -> None:
+		self.data = data
+		self.status_code = status_code
 
 
 _JWKS_CACHE = JwksCache()
@@ -55,6 +95,14 @@ def before_request(
 		"scopes": principal.scopes,
 		"jti": principal.jti,
 	}
+	if path == "/api/v1/service/hrms/health":
+		raise FrappeServiceResponse(
+			{
+				"service": "dhruvanta-hrms",
+				"status": "ok",
+				"authenticatedClient": principal.client_id,
+			}
+		)
 
 
 def _set_authenticate_header(frappe: Any, value: str) -> None:
