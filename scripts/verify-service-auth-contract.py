@@ -15,6 +15,7 @@ REQUIRED_FILES = [
     "hrms/service_auth/verifier.py",
     "hrms/service_auth/route_policy.py",
     "hrms/service_auth/frappe_hook.py",
+    "hrms/service_auth/service_handlers.py",
     "hrms/service_auth/tests/test_verifier.py",
     "hrms/service_auth/tests/test_route_policy.py",
     "hrms/service_auth/tests/test_frappe_hook.py",
@@ -26,11 +27,13 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HANDLERS NOT WIRED YET",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH AND EMPLOYEE LIST SOURCE-WIRED",
         "audience is:",
         "hrms",
         "fail closed",
         "/api/v1/service/hrms/*",
+        "GET /api/v1/service/hrms/employees",
+        "remaining service routes are still",
         "hrms:employee.read",
         "hrms:attendance.write",
         "hrms/service_auth/verifier.py",
@@ -38,7 +41,7 @@ REQUIRED_DOC_TOKENS = {
         "before_request",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HANDLERS NOT WIRED YET",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH AND EMPLOYEE LIST SOURCE-WIRED",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",
@@ -46,6 +49,7 @@ REQUIRED_DOC_TOKENS = {
         "Idempotency-Key",
         "hrms/service_auth/verifier.py",
         "hrms/hooks.py",
+        "employee directory",
     ],
     "docs/openapi/hrms-service-api.openapi.yaml": [
         "operationId: listHrmsEmployees",
@@ -92,6 +96,13 @@ REQUIRED_SOURCE_TOKENS = {
         "def before_request",
         "frappe.local.service_client",
         "WWW-Authenticate",
+        "list_employees",
+    ],
+    "hrms/service_auth/service_handlers.py": [
+        "def list_employees",
+        "frappe.get_all",
+        "Employee",
+        "limit_page_length",
     ],
     "hrms/hooks.py": [
         "Dhruvanta modification",
@@ -139,8 +150,8 @@ def main() -> None:
     openapi = read("docs/openapi/hrms-service-api.openapi.yaml")
     if openapi.count("operationId:") < 10:
         fail("OpenAPI contract should expose at least 10 planned operations")
-    if "not wired yet" not in openapi.lower():
-        fail("OpenAPI description must state the contract is not wired yet")
+    if "remaining endpoints are not wired yet" not in openapi.lower():
+        fail("OpenAPI description must state remaining endpoints are not wired yet")
 
     print("HRMS service-auth contract verifier passed")
 

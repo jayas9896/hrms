@@ -1,5 +1,5 @@
 """Dhruvanta HRMS service-auth package.
 
-The verifier core is source-ready, but the Frappe hook and
-``/api/v1/service/hrms/*`` handlers are not wired yet.
+The verifier, Frappe hook, health responder, and employee-list responder are
+source-ready. Remaining ``/api/v1/service/hrms/*`` handlers are pending.
 """

@@ -4,7 +4,8 @@ info:
   version: 0.1.0-contract
   description: >
     Backend-first contract for Dhruvanta HRMS service-auth endpoints. These
-    endpoints are contract locked and not wired yet.
+    endpoints are contract locked; health and employee list are source-wired,
+    while the remaining endpoints are not wired yet.
 servers:
   - url: https://api.dhruvantasystems.net/hrms
 security:
@@ -611,4 +612,3 @@ components:
           type: string
         request_id:
           type: string
-

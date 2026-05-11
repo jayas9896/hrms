@@ -46,17 +46,29 @@ class FakeHeaders(dict):
 
 
 class FakeFrappe:
-	def __init__(self, path: str, authorization: str | None = None) -> None:
+	def __init__(
+			self,
+			path: str,
+			authorization: str | None = None,
+			args: dict[str, str] | None = None,
+			employees: list[dict[str, object]] | None = None,
+	) -> None:
 		self.local = SimpleNamespace(
-			request=SimpleNamespace(path=path, method="GET"),
+			request=SimpleNamespace(path=path, method="GET", args=args or {}),
 			response_headers=FakeHeaders(),
 		)
 		self._authorization = authorization
+		self._employees = employees or []
+		self.get_all_calls = []
 
 	def get_request_header(self, name: str) -> str | None:
 		if name.lower() == "authorization":
 			return self._authorization
 		return None
+
+	def get_all(self, doctype: str, **kwargs: object) -> list[dict[str, object]]:
+		self.get_all_calls.append((doctype, kwargs))
+		return self._employees
 
 
 class StaticCache:
@@ -88,7 +100,7 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertIn("WWW-Authenticate", frappe.local.response_headers)
 
 	def test_valid_service_request_sets_service_client(self) -> None:
-		frappe = FakeFrappe("/api/v1/service/hrms/employees", "Bearer good")
+		frappe = FakeFrappe("/api/v1/service/hrms/employees/EMP-0001", "Bearer good")
 
 		before_request(
 			frappe_module=frappe,
@@ -114,6 +126,39 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertIn(b'"service":"dhruvanta-hrms"', response.data)
 		self.assertIn(b'"status":"ok"', response.data)
+
+	def test_employee_list_route_returns_directory_payload(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/employees",
+			"Bearer good",
+			args={"limit": "25"},
+			employees=[
+				{
+					"name": "EMP-0001",
+					"employee_name": "Ada Lovelace",
+					"status": "Active",
+					"company": "Dhruvanta Systems",
+					"department": "Engineering",
+					"designation": "Engineer",
+					"user_id": "ada@example.test",
+				}
+			],
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 200)
+		self.assertIn(b'"request_id":"jti-1"', response.data)
+		self.assertIn(b'"employeeId":"EMP-0001"', response.data)
+		self.assertIn(b'"displayName":"Ada Lovelace"', response.data)
+		self.assertEqual(frappe.get_all_calls[0][0], "Employee")
+		self.assertEqual(frappe.get_all_calls[0][1]["limit_page_length"], 25)
 
 
 if __name__ == "__main__":

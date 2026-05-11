@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Backend API Contract
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HANDLERS NOT WIRED YET** for
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH AND EMPLOYEE LIST SOURCE-WIRED** for
 `/api/v1/service/hrms/*`.
 
 This document is the backend-first contract for Dhruvanta HRMS. It records what frontend shells can assume today and what backend routes must provide before HRMS is marked self-service in Dhruvanta One.
@@ -31,14 +31,12 @@ GET /api/method/hrms.api.oauth.oauth_providers
 Authenticated calls require the current Frappe session/API-key mechanism. Guest calls are limited to login discovery helpers.
 
 The ES256/JWKS/scope verifier core is source-ready in
-`hrms/service_auth/verifier.py`, but the Frappe request hook, JWKS
-discovery/cache, and service handlers are not mounted yet. The verifier core
-includes issuer discovery, JWKS caching, and one-time `kid` miss refresh for key
-rotation readiness. The source-ready route policy in
+`hrms/service_auth/verifier.py`. It includes issuer discovery, JWKS caching, and
+one-time `kid` miss refresh for key rotation readiness. The source-ready route policy in
 `hrms/service_auth/route_policy.py` locks method/path-to-scope mapping and
 rejects non-contract routes fail-closed. The Frappe `before_request` guard is
-source-wired in `hrms/hooks.py`, but the service handlers for the locked routes
-are still pending.
+source-wired in `hrms/hooks.py`; hook-level handlers exist for health and the
+employee directory, while the remaining locked routes are still pending.
 
 ## Future Dhruvanta Service API
 
@@ -104,7 +102,7 @@ Support UI needs read-only search, impersonation-free diagnostics, audit history
 HRMS must not be marked fully self-service until these are complete:
 
 - Dhruvanta service-auth verifier is implemented and tested.
-- `/api/v1/service/hrms/*` routes are backed by explicit handlers.
+- Remaining `/api/v1/service/hrms/*` routes are backed by explicit handlers.
 - Dhruvanta One onboarding can provision or link a Frappe workspace fail-closed.
 - Admin/support realms use Dhruvanta auth and TOTP, not shared Frappe administrator credentials.
 - Gateway route-registry tests cover HRMS route behavior.

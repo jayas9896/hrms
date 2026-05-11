@@ -6,6 +6,7 @@ import json
 from typing import Any, Callable
 
 from hrms.service_auth.route_policy import ServiceRoutePolicy, UnsupportedServiceRoute
+from hrms.service_auth.service_handlers import list_employees
 from hrms.service_auth.verifier import (
 	JwksCache,
 	ServiceAuthError,
@@ -102,6 +103,10 @@ def before_request(
 				"status": "ok",
 				"authenticatedClient": principal.client_id,
 			}
+		)
+	if path == "/api/v1/service/hrms/employees":
+		raise FrappeServiceResponse(
+			list_employees(frappe, request, request_id=principal.jti)
 		)
 
 
