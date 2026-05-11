@@ -56,6 +56,20 @@ PAYROLL_SLIP_FIELDS = (
 	"status",
 )
 
+AUDIT_EVENT_FIELDS = (
+	"name",
+	"subject",
+	"content",
+	"operation",
+	"status",
+	"reference_doctype",
+	"reference_name",
+	"user",
+	"full_name",
+	"ip_address",
+	"communication_date",
+)
+
 
 def list_employees(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
 	limit = _bounded_limit(getattr(request, "args", {}).get("limit"))
@@ -90,6 +104,22 @@ def list_payroll_slips(frappe: Any, request: Any, *, request_id: str | None) -> 
 	return {
 		"request_id": request_id,
 		"items": [_payroll_slip_payload(row) for row in rows],
+		"limit": limit,
+		"nextCursor": None,
+	}
+
+
+def list_audit_events(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
+	limit = _bounded_limit(getattr(request, "args", {}).get("limit"))
+	rows = frappe.get_all(
+		"Activity Log",
+		fields=list(AUDIT_EVENT_FIELDS),
+		order_by="communication_date desc, creation desc",
+		limit_page_length=limit,
+	)
+	return {
+		"request_id": request_id,
+		"items": [_audit_event_payload(row) for row in rows],
 		"limit": limit,
 		"nextCursor": None,
 	}
@@ -251,6 +281,22 @@ def _payroll_slip_payload(row: dict[str, Any]) -> dict[str, Any]:
 		"netPay": row.get("net_pay"),
 		"grossPay": row.get("gross_pay"),
 		"status": row.get("status"),
+	}
+
+
+def _audit_event_payload(row: dict[str, Any]) -> dict[str, Any]:
+	return {
+		"eventId": row.get("name"),
+		"subject": row.get("subject"),
+		"content": row.get("content"),
+		"operation": row.get("operation"),
+		"status": row.get("status"),
+		"referenceDoctype": row.get("reference_doctype"),
+		"referenceName": row.get("reference_name"),
+		"userId": row.get("user"),
+		"userName": row.get("full_name"),
+		"ipAddress": row.get("ip_address"),
+		"eventTime": _string_value(row.get("communication_date")),
 	}
 
 

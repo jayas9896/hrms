@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Backend API Contract
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, ROSTER EVENTS, AND PAYROLL SLIPS SOURCE-WIRED** for
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, ROSTER EVENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED** for
 `/api/v1/service/hrms/*`.
 
 This document is the backend-first contract for Dhruvanta HRMS. It records what frontend shells can assume today and what backend routes must provide before HRMS is marked self-service in Dhruvanta One.
@@ -36,9 +36,9 @@ one-time `kid` miss refresh for key rotation readiness. The source-ready route p
 `hrms/service_auth/route_policy.py` locks method/path-to-scope mapping and
 rejects non-contract routes fail-closed. The Frappe `before_request` guard is
 source-wired in `hrms/hooks.py`; hook-level handlers exist for health, employee
-directory, employee detail reads, leave list reads, attendance list reads, and
-roster event reads, and payroll slip reads, while the remaining locked routes
-are still pending.
+directory, employee detail reads, leave list reads, attendance list reads,
+roster event reads, payroll slip reads, and audit event reads, while the
+remaining write/import locked routes are still pending.
 
 ## Future Dhruvanta Service API
 

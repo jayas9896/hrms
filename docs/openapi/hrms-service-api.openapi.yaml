@@ -575,8 +575,42 @@ components:
             items:
               type: array
               items:
-                type: object
-                additionalProperties: true
+                $ref: "#/components/schemas/AuditEvent"
+    AuditEvent:
+      type: object
+      required: [eventId, subject]
+      properties:
+        eventId:
+          type: string
+        subject:
+          type: string
+        content:
+          type: string
+          nullable: true
+        operation:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        referenceDoctype:
+          type: string
+          nullable: true
+        referenceName:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        userName:
+          type: string
+          nullable: true
+        ipAddress:
+          type: string
+          nullable: true
+        eventTime:
+          type: string
+          nullable: true
     AcceptedResponse:
       type: object
       required: [status, request_id]

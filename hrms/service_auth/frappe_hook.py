@@ -8,6 +8,7 @@ from typing import Any, Callable
 from hrms.service_auth.route_policy import ServiceRoutePolicy, UnsupportedServiceRoute
 from hrms.service_auth.service_handlers import (
 	get_employee,
+	list_audit_events,
 	list_attendance,
 	list_employees,
 	list_leaves,
@@ -130,6 +131,10 @@ def before_request(
 	if path == "/api/v1/service/hrms/payroll/slips":
 		raise FrappeServiceResponse(
 			list_payroll_slips(frappe, request, request_id=principal.jti)
+		)
+	if path == "/api/v1/service/hrms/audit-events":
+		raise FrappeServiceResponse(
+			list_audit_events(frappe, request, request_id=principal.jti)
 		)
 	employee_prefix = "/api/v1/service/hrms/employees/"
 	if path.startswith(employee_prefix):
