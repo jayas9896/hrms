@@ -149,7 +149,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LeaveApplication"
+                $ref: "#/components/schemas/AcceptedResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -450,19 +450,26 @@ components:
           type: string
     LeaveCreateRequest:
       type: object
-      required: [employee_id, leave_type, from_date, to_date]
+      required: [employeeId, leaveType, fromDate, toDate, company]
       properties:
-        employee_id:
+        employeeId:
           type: string
-        leave_type:
+        leaveType:
           type: string
-        from_date:
-          type: string
-          format: date
-        to_date:
+        fromDate:
           type: string
           format: date
-        reason:
+        toDate:
+          type: string
+          format: date
+        company:
+          type: string
+        halfDay:
+          type: boolean
+        halfDayDate:
+          type: string
+          format: date
+        description:
           type: string
     LeavePage:
       allOf:
@@ -626,6 +633,8 @@ components:
         request_id:
           type: string
         checkinId:
+          type: string
+        leaveId:
           type: string
         idempotencyKey:
           type: string

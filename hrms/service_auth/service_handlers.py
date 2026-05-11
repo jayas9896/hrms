@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 import json
 from typing import Any
 
@@ -178,11 +179,7 @@ def create_attendance_checkin(
 ) -> tuple[dict[str, Any], int]:
 	idempotency_key = _header(frappe, "Idempotency-Key")
 	if not idempotency_key:
-		return {
-			"request_id": request_id,
-			"code": "HRMS_IDEMPOTENCY_KEY_REQUIRED",
-			"message": "Idempotency-Key header is required for attendance check-ins",
-		}, 428
+		return _idempotency_required(request_id, "attendance check-ins"), 428
 
 	replayed = _find_completed_idempotency(frappe, idempotency_key)
 	if replayed is not None:
@@ -199,11 +196,7 @@ def create_attendance_checkin(
 		if not value
 	]
 	if missing:
-		return {
-			"request_id": request_id,
-			"code": "HRMS_INVALID_CHECKIN_REQUEST",
-			"message": f"Missing required field: {missing[0]}",
-		}, 400
+		return _invalid_request(request_id, missing[0]), 400
 
 	checkin = frappe.get_doc(
 		{
@@ -246,6 +239,65 @@ def list_leaves(frappe: Any, request: Any, *, request_id: str | None) -> dict[st
 		"limit": limit,
 		"nextCursor": None,
 	}
+
+
+def create_leave_application(
+		frappe: Any,
+		request: Any,
+		*,
+		request_id: str | None,
+) -> tuple[dict[str, Any], int]:
+	idempotency_key = _header(frappe, "Idempotency-Key")
+	if not idempotency_key:
+		return _idempotency_required(request_id, "leave applications"), 428
+
+	replayed = _find_completed_idempotency(frappe, idempotency_key)
+	if replayed is not None:
+		replayed["request_id"] = request_id
+		replayed["replayed"] = True
+		return replayed, 200
+
+	body = _json_body(request)
+	employee_id = body.get("employeeId") or body.get("employee_id")
+	leave_type = body.get("leaveType") or body.get("leave_type")
+	from_date = body.get("fromDate") or body.get("from_date")
+	to_date = body.get("toDate") or body.get("to_date")
+	company = body.get("company")
+	required = (
+		("employeeId", employee_id),
+		("leaveType", leave_type),
+		("fromDate", from_date),
+		("toDate", to_date),
+		("company", company),
+	)
+	missing = [name for name, value in required if not value]
+	if missing:
+		return _invalid_request(request_id, missing[0]), 400
+
+	leave = frappe.get_doc(
+		{
+			"doctype": "Leave Application",
+			"naming_series": body.get("namingSeries") or "HR-LAP-.YYYY.-",
+			"employee": employee_id,
+			"leave_type": leave_type,
+			"from_date": from_date,
+			"to_date": to_date,
+			"half_day": 1 if body.get("halfDay") or body.get("half_day") else 0,
+			"half_day_date": body.get("halfDayDate") or body.get("half_day_date"),
+			"description": body.get("description"),
+			"company": company,
+			"posting_date": body.get("postingDate") or body.get("posting_date") or date.today().isoformat(),
+			"status": body.get("status") or "Open",
+		}
+	).insert(ignore_permissions=True)
+	response = {
+		"request_id": request_id,
+		"status": "accepted",
+		"leaveId": leave.name,
+		"idempotencyKey": idempotency_key,
+	}
+	_record_completed_idempotency(frappe, idempotency_key, response, "Leave Application", leave.name)
+	return response, 201
 
 
 def get_employee(
@@ -291,6 +343,22 @@ def _json_body(request: Any) -> dict[str, Any]:
 		if isinstance(body, dict):
 			return body
 	return {}
+
+
+def _idempotency_required(request_id: str | None, resource_name: str) -> dict[str, Any]:
+	return {
+		"request_id": request_id,
+		"code": "HRMS_IDEMPOTENCY_KEY_REQUIRED",
+		"message": f"Idempotency-Key header is required for {resource_name}",
+	}
+
+
+def _invalid_request(request_id: str | None, missing_field: str) -> dict[str, Any]:
+	return {
+		"request_id": request_id,
+		"code": "HRMS_INVALID_REQUEST",
+		"message": f"Missing required field: {missing_field}",
+	}
 
 
 def _find_completed_idempotency(frappe: Any, key: str) -> dict[str, Any] | None:

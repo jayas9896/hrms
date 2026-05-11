@@ -504,6 +504,62 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertEqual(frappe.inserted_docs[0][0]["doctype"], "Employee Checkin")
 		self.assertEqual(frappe.inserted_docs[0][0]["employee"], "EMP-0001")
 
+	def test_leave_create_route_requires_idempotency_key(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/leaves",
+			"Bearer good",
+			method="POST",
+			json_body={
+				"employeeId": "EMP-0001",
+				"leaveType": "Privilege Leave",
+				"fromDate": "2026-05-20",
+				"toDate": "2026-05-21",
+				"company": "Dhruvanta Systems",
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 428)
+		self.assertIn(b'"code":"HRMS_IDEMPOTENCY_KEY_REQUIRED"', response.data)
+
+	def test_leave_create_route_creates_leave_application(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/leaves",
+			"Bearer good",
+			method="POST",
+			headers={"Idempotency-Key": "leave-idem-1"},
+			json_body={
+				"employeeId": "EMP-0001",
+				"leaveType": "Privilege Leave",
+				"fromDate": "2026-05-20",
+				"toDate": "2026-05-21",
+				"company": "Dhruvanta Systems",
+				"description": "Family function",
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 201)
+		self.assertIn(b'"status":"accepted"', response.data)
+		self.assertIn(b'"leaveId":"Leave Application-0001"', response.data)
+		self.assertEqual(frappe.inserted_docs[0][0]["doctype"], "Leave Application")
+		self.assertEqual(frappe.inserted_docs[0][0]["employee"], "EMP-0001")
+		self.assertEqual(frappe.inserted_docs[0][0]["leave_type"], "Privilege Leave")
+
 
 if __name__ == "__main__":
 	unittest.main()

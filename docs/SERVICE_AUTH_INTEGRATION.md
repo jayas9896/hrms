@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Service Auth Integration
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED**.
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, LEAVE CREATE, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED**.
 
 Dhruvanta HRMS currently serves the Frappe HR application and whitelisted Frappe methods through the gateway path:
 
@@ -19,7 +19,8 @@ also discovers and caches JWKS from the issuer metadata and refetches once on a
 exist for `GET /api/v1/service/hrms/health`,
 `GET /api/v1/service/hrms/employees`, and
 `GET /api/v1/service/hrms/employees/{employeeId}`, plus
-`GET /api/v1/service/hrms/leaves` and
+`GET /api/v1/service/hrms/leaves`,
+`POST /api/v1/service/hrms/leaves`,
 `GET /api/v1/service/hrms/attendance`,
 `POST /api/v1/service/hrms/attendance/checkins`,
 `GET /api/v1/service/hrms/roster/events`,
@@ -87,8 +88,8 @@ Before changing the status from contract-locked to live:
 
 1. Add explicit route handlers for the remaining write/import
    `/api/v1/service/hrms/*` routes beyond health, employee reads, leave list,
-   attendance list, attendance check-ins, roster events, payroll slips, and
-   audit events.
+   leave creation, attendance list, attendance check-ins, roster events, payroll
+   slips, and audit events.
 2. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
 3. Add OpenAPI examples and curl smoke commands.
 4. Update the governance registry and repo log in the same slice.
