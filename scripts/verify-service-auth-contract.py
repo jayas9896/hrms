@@ -27,7 +27,7 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, ROSTER EVENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED",
         "audience is:",
         "hrms",
         "fail closed",
@@ -36,6 +36,7 @@ REQUIRED_DOC_TOKENS = {
         "GET /api/v1/service/hrms/employees/{employeeId}",
         "GET /api/v1/service/hrms/leaves",
         "GET /api/v1/service/hrms/attendance",
+        "POST /api/v1/service/hrms/attendance/checkins",
         "GET /api/v1/service/hrms/roster/events",
         "GET /api/v1/service/hrms/payroll/slips",
         "GET /api/v1/service/hrms/audit-events",
@@ -47,7 +48,7 @@ REQUIRED_DOC_TOKENS = {
         "before_request",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, ROSTER EVENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",
@@ -59,6 +60,7 @@ REQUIRED_DOC_TOKENS = {
         "employee detail",
         "leave list",
         "attendance list",
+        "attendance check-in",
         "roster event",
         "payroll slip",
         "audit event",
@@ -112,6 +114,7 @@ REQUIRED_SOURCE_TOKENS = {
         "get_employee",
         "list_leaves",
         "list_attendance",
+        "create_attendance_checkin",
         "list_roster_events",
         "list_payroll_slips",
         "list_audit_events",
@@ -121,6 +124,7 @@ REQUIRED_SOURCE_TOKENS = {
         "def get_employee",
         "def list_leaves",
         "def list_attendance",
+        "def create_attendance_checkin",
         "def list_roster_events",
         "def list_payroll_slips",
         "def list_audit_events",
@@ -129,6 +133,8 @@ REQUIRED_SOURCE_TOKENS = {
         "Employee",
         "Leave Application",
         "Attendance",
+        "Employee Checkin",
+        "Integration Request",
         "Shift Assignment",
         "Salary Slip",
         "Activity Log",

@@ -205,7 +205,7 @@ paths:
             schema:
               $ref: "#/components/schemas/AttendanceCheckinRequest"
       responses:
-        "202":
+        "201":
           description: Check-in accepted
           content:
             application/json:
@@ -495,13 +495,18 @@ components:
                 $ref: "#/components/schemas/AttendanceRecord"
     AttendanceCheckinRequest:
       type: object
-      required: [employee_id, timestamp]
+      required: [employeeId, time]
       properties:
-        employee_id:
+        employeeId:
           type: string
-        timestamp:
+        time:
           type: string
           format: date-time
+        logType:
+          type: string
+          enum: [IN, OUT]
+        deviceId:
+          type: string
         latitude:
           type: number
         longitude:
@@ -619,6 +624,10 @@ components:
           type: string
           enum: [accepted]
         request_id:
+          type: string
+        checkinId:
+          type: string
+        idempotencyKey:
           type: string
     Page:
       type: object

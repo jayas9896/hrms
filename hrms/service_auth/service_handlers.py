@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 
@@ -169,6 +170,62 @@ def list_attendance(frappe: Any, request: Any, *, request_id: str | None) -> dic
 	}
 
 
+def create_attendance_checkin(
+		frappe: Any,
+		request: Any,
+		*,
+		request_id: str | None,
+) -> tuple[dict[str, Any], int]:
+	idempotency_key = _header(frappe, "Idempotency-Key")
+	if not idempotency_key:
+		return {
+			"request_id": request_id,
+			"code": "HRMS_IDEMPOTENCY_KEY_REQUIRED",
+			"message": "Idempotency-Key header is required for attendance check-ins",
+		}, 428
+
+	replayed = _find_completed_idempotency(frappe, idempotency_key)
+	if replayed is not None:
+		replayed["request_id"] = request_id
+		replayed["replayed"] = True
+		return replayed, 200
+
+	body = _json_body(request)
+	employee_id = body.get("employeeId") or body.get("employee_id")
+	checkin_time = body.get("time") or body.get("timestamp")
+	missing = [
+		name
+		for name, value in (("employeeId", employee_id), ("time", checkin_time))
+		if not value
+	]
+	if missing:
+		return {
+			"request_id": request_id,
+			"code": "HRMS_INVALID_CHECKIN_REQUEST",
+			"message": f"Missing required field: {missing[0]}",
+		}, 400
+
+	checkin = frappe.get_doc(
+		{
+			"doctype": "Employee Checkin",
+			"employee": employee_id,
+			"time": checkin_time,
+			"log_type": body.get("logType") or body.get("log_type"),
+			"device_id": body.get("deviceId") or body.get("device_id"),
+			"latitude": body.get("latitude"),
+			"longitude": body.get("longitude"),
+		}
+	).insert(ignore_permissions=True)
+	response = {
+		"request_id": request_id,
+		"status": "accepted",
+		"checkinId": checkin.name,
+		"idempotencyKey": idempotency_key,
+	}
+	_record_completed_idempotency(frappe, idempotency_key, response, "Employee Checkin", checkin.name)
+	return response, 201
+
+
 def list_leaves(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
 	args = getattr(request, "args", {})
 	limit = _bounded_limit(args.get("limit"))
@@ -221,6 +278,58 @@ def _bounded_limit(raw: object) -> int:
 	except ValueError:
 		return 50
 	return min(max(parsed, 1), 100)
+
+
+def _header(frappe: Any, name: str) -> str | None:
+	value = frappe.get_request_header(name)
+	return str(value).strip() if value else None
+
+
+def _json_body(request: Any) -> dict[str, Any]:
+	if hasattr(request, "get_json"):
+		body = request.get_json(silent=True)
+		if isinstance(body, dict):
+			return body
+	return {}
+
+
+def _find_completed_idempotency(frappe: Any, key: str) -> dict[str, Any] | None:
+	rows = frappe.get_all(
+		"Integration Request",
+		fields=["name", "status", "output"],
+		filters={
+			"integration_request_service": "dhruvanta-hrms-service-auth",
+			"request_id": key,
+		},
+		limit_page_length=1,
+	)
+	if not rows or rows[0].get("status") != "Completed" or not rows[0].get("output"):
+		return None
+	try:
+		parsed = json.loads(str(rows[0]["output"]))
+	except (TypeError, ValueError):
+		return None
+	return parsed if isinstance(parsed, dict) else None
+
+
+def _record_completed_idempotency(
+		frappe: Any,
+		key: str,
+		output: dict[str, Any],
+		reference_doctype: str,
+		reference_docname: str,
+) -> None:
+	frappe.get_doc(
+		{
+			"doctype": "Integration Request",
+			"integration_request_service": "dhruvanta-hrms-service-auth",
+			"request_id": key,
+			"status": "Completed",
+			"output": json.dumps(output, separators=(",", ":")),
+			"reference_doctype": reference_doctype,
+			"reference_docname": reference_docname,
+		}
+	).insert(ignore_permissions=True)
 
 
 def _employee_payload(row: dict[str, Any]) -> dict[str, Any]:

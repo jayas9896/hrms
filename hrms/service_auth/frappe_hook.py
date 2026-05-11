@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from hrms.service_auth.route_policy import ServiceRoutePolicy, UnsupportedServiceRoute
 from hrms.service_auth.service_handlers import (
+	create_attendance_checkin,
 	get_employee,
 	list_audit_events,
 	list_attendance,
@@ -124,6 +125,13 @@ def before_request(
 		raise FrappeServiceResponse(
 			list_attendance(frappe, request, request_id=principal.jti)
 		)
+	if path == "/api/v1/service/hrms/attendance/checkins":
+		body, status_code = create_attendance_checkin(
+			frappe,
+			request,
+			request_id=principal.jti,
+		)
+		raise FrappeServiceResponse(body, status_code=status_code)
 	if path == "/api/v1/service/hrms/roster/events":
 		raise FrappeServiceResponse(
 			list_roster_events(frappe, request, request_id=principal.jti)

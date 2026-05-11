@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 import importlib.util
+import json
 import types
 from pathlib import Path
 import sys
@@ -50,7 +51,10 @@ class FakeFrappe:
 			self,
 			path: str,
 			authorization: str | None = None,
+			method: str = "GET",
 			args: dict[str, str] | None = None,
+			headers: dict[str, str] | None = None,
+			json_body: dict[str, object] | None = None,
 			employees: list[dict[str, object]] | None = None,
 			employee: dict[str, object] | None = None,
 			leaves: list[dict[str, object]] | None = None,
@@ -60,10 +64,16 @@ class FakeFrappe:
 			audit_events: list[dict[str, object]] | None = None,
 	) -> None:
 		self.local = SimpleNamespace(
-			request=SimpleNamespace(path=path, method="GET", args=args or {}),
+			request=SimpleNamespace(
+				path=path,
+				method=method,
+				args=args or {},
+				get_json=lambda silent=False: json_body,
+			),
 			response_headers=FakeHeaders(),
 		)
 		self._authorization = authorization
+		self._headers = headers or {}
 		self._employees = employees or []
 		self._employee = employee
 		self._leaves = leaves or []
@@ -73,11 +83,12 @@ class FakeFrappe:
 		self._audit_events = audit_events or []
 		self.get_all_calls = []
 		self.get_value_calls = []
+		self.inserted_docs = []
 
 	def get_request_header(self, name: str) -> str | None:
 		if name.lower() == "authorization":
 			return self._authorization
-		return None
+		return self._headers.get(name) or self._headers.get(name.lower())
 
 	def get_all(self, doctype: str, **kwargs: object) -> list[dict[str, object]]:
 		self.get_all_calls.append((doctype, kwargs))
@@ -91,6 +102,8 @@ class FakeFrappe:
 			return self._payroll_slips
 		if doctype == "Activity Log":
 			return self._audit_events
+		if doctype == "Integration Request":
+			return []
 		return self._employees
 
 	def get_value(
@@ -102,6 +115,20 @@ class FakeFrappe:
 	) -> dict[str, object] | None:
 		self.get_value_calls.append((doctype, name, fieldname, as_dict))
 		return self._employee
+
+	def get_doc(self, payload: dict[str, object]) -> object:
+		frappe = self
+
+		class FakeDoc:
+			def __init__(self, data: dict[str, object]) -> None:
+				self.data = data
+				self.name = str(data.get("name") or f"{data.get('doctype')}-0001")
+
+			def insert(self, ignore_permissions: bool = False) -> object:
+				frappe.inserted_docs.append((self.data, ignore_permissions))
+				return self
+
+		return FakeDoc(payload)
 
 
 class StaticCache:
@@ -427,6 +454,55 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertIn(b'"subject":"Ada Lovelace updated"', response.data)
 		self.assertEqual(frappe.get_all_calls[-1][0], "Activity Log")
 		self.assertEqual(frappe.get_all_calls[-1][1]["limit_page_length"], 12)
+
+	def test_attendance_checkin_route_requires_idempotency_key(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/attendance/checkins",
+			"Bearer good",
+			method="POST",
+			json_body={"employeeId": "EMP-0001", "time": "2026-05-10T09:00:00", "logType": "IN"},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 428)
+		self.assertIn(b'"code":"HRMS_IDEMPOTENCY_KEY_REQUIRED"', response.data)
+
+	def test_attendance_checkin_route_creates_employee_checkin(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/attendance/checkins",
+			"Bearer good",
+			method="POST",
+			headers={"Idempotency-Key": "idem-1"},
+			json_body={
+				"employeeId": "EMP-0001",
+				"time": "2026-05-10T09:00:00",
+				"logType": "IN",
+				"deviceId": "dhruvanta-one",
+				"latitude": 12.97,
+				"longitude": 77.59,
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 201)
+		self.assertIn(b'"status":"accepted"', response.data)
+		self.assertIn(b'"checkinId":"Employee Checkin-0001"', response.data)
+		self.assertEqual(frappe.inserted_docs[0][0]["doctype"], "Employee Checkin")
+		self.assertEqual(frappe.inserted_docs[0][0]["employee"], "EMP-0001")
 
 
 if __name__ == "__main__":
