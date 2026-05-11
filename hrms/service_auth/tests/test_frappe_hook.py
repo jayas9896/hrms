@@ -269,6 +269,65 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertIn(b'"code":"HRMS_EMPLOYEE_NOT_FOUND"', response.data)
 		self.assertIn(b'"request_id":"jti-1"', response.data)
 
+	def test_employee_create_route_requires_idempotency_key(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/employees",
+			"Bearer good",
+			method="POST",
+			json_body={
+				"firstName": "Ada",
+				"company": "Dhruvanta Systems",
+				"gender": "Female",
+				"dateOfBirth": "1990-01-01",
+				"dateOfJoining": "2026-05-20",
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 428)
+		self.assertIn(b'"code":"HRMS_IDEMPOTENCY_KEY_REQUIRED"', response.data)
+
+	def test_employee_create_route_creates_employee(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/employees",
+			"Bearer good",
+			method="POST",
+			headers={"Idempotency-Key": "employee-idem-1"},
+			json_body={
+				"firstName": "Ada",
+				"lastName": "Lovelace",
+				"company": "Dhruvanta Systems",
+				"gender": "Female",
+				"dateOfBirth": "1990-01-01",
+				"dateOfJoining": "2026-05-20",
+				"userId": "ada@example.test",
+				"department": "Engineering",
+				"designation": "Engineer",
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 201)
+		self.assertIn(b'"status":"accepted"', response.data)
+		self.assertIn(b'"employeeId":"Employee-0001"', response.data)
+		self.assertEqual(frappe.inserted_docs[0][0]["doctype"], "Employee")
+		self.assertEqual(frappe.inserted_docs[0][0]["first_name"], "Ada")
+		self.assertEqual(frappe.inserted_docs[0][0]["company"], "Dhruvanta Systems")
+
 	def test_leave_list_route_returns_leave_payload(self) -> None:
 		frappe = FakeFrappe(
 			"/api/v1/service/hrms/leaves",

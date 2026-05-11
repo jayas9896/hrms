@@ -4,9 +4,8 @@ info:
   version: 0.1.0-contract
   description: >
     Backend-first contract for Dhruvanta HRMS service-auth endpoints. These
-    endpoints are contract locked; health, employee read, leave list,
-    attendance list, roster event, and payroll slip routes are source-wired,
-    while the remaining endpoints are not wired yet.
+    endpoints are contract locked; all locked service routes are source-wired,
+    and successful bearer-token public smokes are still pending.
 servers:
   - url: https://api.dhruvantasystems.net/hrms
 security:
@@ -75,7 +74,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Employee"
+                $ref: "#/components/schemas/AcceptedResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -408,13 +407,27 @@ components:
           type: string
     EmployeeCreateRequest:
       type: object
-      required: [employee_name, company]
+      required: [firstName, company, gender, dateOfBirth, dateOfJoining]
       properties:
-        employee_name:
+        firstName:
+          type: string
+        middleName:
+          type: string
+        lastName:
+          type: string
+        displayName:
           type: string
         company:
           type: string
-        user_email:
+        gender:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        dateOfJoining:
+          type: string
+          format: date
+        userId:
           type: string
           format: email
         department:
@@ -635,6 +648,8 @@ components:
           type: string
           enum: [accepted]
         request_id:
+          type: string
+        employeeId:
           type: string
         checkinId:
           type: string

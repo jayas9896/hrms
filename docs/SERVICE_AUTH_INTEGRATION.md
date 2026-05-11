@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Service Auth Integration
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, LEAVE CREATE, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, ROSTER ASSIGNMENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED**.
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING**.
 
 Dhruvanta HRMS currently serves the Frappe HR application and whitelisted Frappe methods through the gateway path:
 
@@ -17,7 +17,8 @@ also discovers and caches JWKS from the issuer metadata and refetches once on a
 `kid` miss so key rotation can recover without restarting Frappe. The Frappe
 `before_request` guard is source-wired in `hrms/hooks.py`. Hook-level handlers
 exist for `GET /api/v1/service/hrms/health`,
-`GET /api/v1/service/hrms/employees`, and
+`GET /api/v1/service/hrms/employees`,
+`POST /api/v1/service/hrms/employees`, and
 `GET /api/v1/service/hrms/employees/{employeeId}`, plus
 `GET /api/v1/service/hrms/leaves`,
 `POST /api/v1/service/hrms/leaves`,
@@ -26,10 +27,10 @@ exist for `GET /api/v1/service/hrms/health`,
 `GET /api/v1/service/hrms/roster/events`,
 `POST /api/v1/service/hrms/roster/assignments`,
 `GET /api/v1/service/hrms/payroll/slips`, and
-`GET /api/v1/service/hrms/audit-events`; the remaining write/import service
-routes are still not wired. The guard uses
-`hrms/service_auth/route_policy.py` to reject non-contract method/path
-combinations before scope verification.
+`GET /api/v1/service/hrms/audit-events`; all currently locked service routes in
+`hrms/service_auth/route_policy.py` have explicit handlers. The guard uses that
+route policy to reject non-contract method/path combinations before scope
+verification.
 
 ## Locked Dhruvanta Service Contract
 
@@ -87,10 +88,8 @@ Frontend engineers must treat this current surface as Frappe-session based. Cust
 
 Before changing the status from contract-locked to live:
 
-1. Add explicit route handlers for the remaining write/import
-   `/api/v1/service/hrms/*` routes beyond health, employee reads, leave list,
-   leave creation, attendance list, attendance check-ins, roster events, roster
-   assignments, payroll slips, and audit events.
+1. Run successful bearer-token public smokes for the locked
+   `/api/v1/service/hrms/*` routes with real SCP service-client tokens.
 2. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
 3. Add OpenAPI examples and curl smoke commands.
 4. Update the governance registry and repo log in the same slice.

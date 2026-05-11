@@ -89,6 +89,66 @@ def list_employees(frappe: Any, request: Any, *, request_id: str | None) -> dict
 	}
 
 
+def create_employee(
+		frappe: Any,
+		request: Any,
+		*,
+		request_id: str | None,
+) -> tuple[dict[str, Any], int]:
+	idempotency_key = _header(frappe, "Idempotency-Key")
+	if not idempotency_key:
+		return _idempotency_required(request_id, "employee imports"), 428
+
+	replayed = _find_completed_idempotency(frappe, idempotency_key)
+	if replayed is not None:
+		replayed["request_id"] = request_id
+		replayed["replayed"] = True
+		return replayed, 200
+
+	body = _json_body(request)
+	first_name = body.get("firstName") or body.get("first_name")
+	company = body.get("company")
+	gender = body.get("gender")
+	date_of_birth = body.get("dateOfBirth") or body.get("date_of_birth")
+	date_of_joining = body.get("dateOfJoining") or body.get("date_of_joining")
+	required = (
+		("firstName", first_name),
+		("company", company),
+		("gender", gender),
+		("dateOfBirth", date_of_birth),
+		("dateOfJoining", date_of_joining),
+	)
+	missing = [name for name, value in required if not value]
+	if missing:
+		return _invalid_request(request_id, missing[0]), 400
+
+	employee = frappe.get_doc(
+		{
+			"doctype": "Employee",
+			"first_name": first_name,
+			"middle_name": body.get("middleName") or body.get("middle_name"),
+			"last_name": body.get("lastName") or body.get("last_name"),
+			"employee_name": body.get("displayName") or body.get("employeeName"),
+			"company": company,
+			"gender": gender,
+			"date_of_birth": date_of_birth,
+			"date_of_joining": date_of_joining,
+			"status": body.get("status") or "Active",
+			"user_id": body.get("userId") or body.get("user_id"),
+			"department": body.get("department"),
+			"designation": body.get("designation"),
+		}
+	).insert(ignore_permissions=True)
+	response = {
+		"request_id": request_id,
+		"status": "accepted",
+		"employeeId": employee.name,
+		"idempotencyKey": idempotency_key,
+	}
+	_record_completed_idempotency(frappe, idempotency_key, response, "Employee", employee.name)
+	return response, 201
+
+
 def list_payroll_slips(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
 	args = getattr(request, "args", {})
 	limit = _bounded_limit(args.get("limit"))

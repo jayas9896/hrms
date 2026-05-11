@@ -27,12 +27,13 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, LEAVE CREATE, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, ROSTER ASSIGNMENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING",
         "audience is:",
         "hrms",
         "fail closed",
         "/api/v1/service/hrms/*",
         "GET /api/v1/service/hrms/employees",
+        "POST /api/v1/service/hrms/employees",
         "GET /api/v1/service/hrms/employees/{employeeId}",
         "GET /api/v1/service/hrms/leaves",
         "POST /api/v1/service/hrms/leaves",
@@ -42,7 +43,7 @@ REQUIRED_DOC_TOKENS = {
         "POST /api/v1/service/hrms/roster/assignments",
         "GET /api/v1/service/hrms/payroll/slips",
         "GET /api/v1/service/hrms/audit-events",
-        "write/import service",
+        "all currently locked service routes",
         "hrms:employee.read",
         "hrms:attendance.write",
         "hrms/service_auth/verifier.py",
@@ -50,7 +51,7 @@ REQUIRED_DOC_TOKENS = {
         "before_request",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, LEAVE CREATE, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, ROSTER ASSIGNMENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",
@@ -60,6 +61,7 @@ REQUIRED_DOC_TOKENS = {
         "hrms/hooks.py",
         "Employee directory",
         "employee detail",
+        "employee import",
         "leave list",
         "leave creation",
         "attendance list",
@@ -120,6 +122,7 @@ REQUIRED_SOURCE_TOKENS = {
         "create_leave_application",
         "list_attendance",
         "create_attendance_checkin",
+        "create_employee",
         "list_roster_events",
         "create_roster_assignment",
         "list_payroll_slips",
@@ -127,6 +130,7 @@ REQUIRED_SOURCE_TOKENS = {
     ],
     "hrms/service_auth/service_handlers.py": [
         "def list_employees",
+        "def create_employee",
         "def get_employee",
         "def list_leaves",
         "def create_leave_application",
@@ -195,8 +199,8 @@ def main() -> None:
     if openapi.count("operationId:") < 10:
         fail("OpenAPI contract should expose at least 10 planned operations")
     normalized_openapi = " ".join(openapi.lower().split())
-    if "remaining endpoints are not wired yet" not in normalized_openapi:
-        fail("OpenAPI description must state remaining endpoints are not wired yet")
+    if "all locked service routes are source-wired" not in normalized_openapi:
+        fail("OpenAPI description must state locked service routes are source-wired")
 
     print("HRMS service-auth contract verifier passed")
 

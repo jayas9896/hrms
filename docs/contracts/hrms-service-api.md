@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Backend API Contract
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, LEAVE CREATE, ATTENDANCE LIST, ATTENDANCE CHECKINS, ROSTER EVENTS, ROSTER ASSIGNMENTS, PAYROLL SLIPS, AND AUDIT EVENTS SOURCE-WIRED** for
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING** for
 `/api/v1/service/hrms/*`.
 
 This document is the backend-first contract for Dhruvanta HRMS. It records what frontend shells can assume today and what backend routes must provide before HRMS is marked self-service in Dhruvanta One.
@@ -38,8 +38,8 @@ rejects non-contract routes fail-closed. The Frappe `before_request` guard is
 source-wired in `hrms/hooks.py`; hook-level handlers exist for health, employee
 directory, employee detail reads, leave list reads, leave creation writes, attendance list reads,
 attendance check-in writes, roster event reads, roster assignment writes,
-payroll slip reads, and audit event reads, while the
-remaining write/import locked routes are still pending.
+payroll slip reads, audit event reads, and employee import writes. Successful
+bearer-token public smokes remain pending.
 
 ## Future Dhruvanta Service API
 
@@ -105,7 +105,8 @@ Support UI needs read-only search, impersonation-free diagnostics, audit history
 HRMS must not be marked fully self-service until these are complete:
 
 - Dhruvanta service-auth verifier is implemented and tested.
-- Remaining `/api/v1/service/hrms/*` routes are backed by explicit handlers.
+- Successful bearer-token public smokes cover the locked
+  `/api/v1/service/hrms/*` routes.
 - Dhruvanta One onboarding can provision or link a Frappe workspace fail-closed.
 - Admin/support realms use Dhruvanta auth and TOTP, not shared Frappe administrator credentials.
 - Gateway route-registry tests cover HRMS route behavior.

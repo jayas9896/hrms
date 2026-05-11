@@ -8,6 +8,7 @@ from typing import Any, Callable
 from hrms.service_auth.route_policy import ServiceRoutePolicy, UnsupportedServiceRoute
 from hrms.service_auth.service_handlers import (
 	create_attendance_checkin,
+	create_employee,
 	create_leave_application,
 	create_roster_assignment,
 	get_employee,
@@ -115,10 +116,17 @@ def before_request(
 				"authenticatedClient": principal.client_id,
 			}
 		)
-	if path == "/api/v1/service/hrms/employees":
+	if path == "/api/v1/service/hrms/employees" and getattr(request, "method", "") == "GET":
 		raise FrappeServiceResponse(
 			list_employees(frappe, request, request_id=principal.jti)
 		)
+	if path == "/api/v1/service/hrms/employees":
+		body, status_code = create_employee(
+			frappe,
+			request,
+			request_id=principal.jti,
+		)
+		raise FrappeServiceResponse(body, status_code=status_code)
 	if path == "/api/v1/service/hrms/leaves" and getattr(request, "method", "") == "GET":
 		raise FrappeServiceResponse(
 			list_leaves(frappe, request, request_id=principal.jti)
