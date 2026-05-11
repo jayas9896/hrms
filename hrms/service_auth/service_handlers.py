@@ -149,6 +149,60 @@ def list_roster_events(frappe: Any, request: Any, *, request_id: str | None) -> 
 	}
 
 
+def create_roster_assignment(
+		frappe: Any,
+		request: Any,
+		*,
+		request_id: str | None,
+) -> tuple[dict[str, Any], int]:
+	idempotency_key = _header(frappe, "Idempotency-Key")
+	if not idempotency_key:
+		return _idempotency_required(request_id, "roster assignments"), 428
+
+	replayed = _find_completed_idempotency(frappe, idempotency_key)
+	if replayed is not None:
+		replayed["request_id"] = request_id
+		replayed["replayed"] = True
+		return replayed, 200
+
+	body = _json_body(request)
+	employee_id = body.get("employeeId") or body.get("employee_id")
+	shift_type = body.get("shiftType") or body.get("shift_type")
+	start_date = body.get("startDate") or body.get("start_date")
+	company = body.get("company")
+	required = (
+		("employeeId", employee_id),
+		("shiftType", shift_type),
+		("startDate", start_date),
+		("company", company),
+	)
+	missing = [name for name, value in required if not value]
+	if missing:
+		return _invalid_request(request_id, missing[0]), 400
+
+	assignment = frappe.get_doc(
+		{
+			"doctype": "Shift Assignment",
+			"employee": employee_id,
+			"shift_type": shift_type,
+			"start_date": start_date,
+			"end_date": body.get("endDate") or body.get("end_date"),
+			"company": company,
+			"status": body.get("status") or "Active",
+			"shift_location": body.get("shiftLocation") or body.get("shift_location"),
+			"overtime_type": body.get("overtimeType") or body.get("overtime_type"),
+		}
+	).insert(ignore_permissions=True)
+	response = {
+		"request_id": request_id,
+		"status": "accepted",
+		"assignmentId": assignment.name,
+		"idempotencyKey": idempotency_key,
+	}
+	_record_completed_idempotency(frappe, idempotency_key, response, "Shift Assignment", assignment.name)
+	return response, 201
+
+
 def list_attendance(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
 	args = getattr(request, "args", {})
 	limit = _bounded_limit(args.get("limit"))

@@ -560,6 +560,60 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertEqual(frappe.inserted_docs[0][0]["employee"], "EMP-0001")
 		self.assertEqual(frappe.inserted_docs[0][0]["leave_type"], "Privilege Leave")
 
+	def test_roster_assignment_route_requires_idempotency_key(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/roster/assignments",
+			"Bearer good",
+			method="POST",
+			json_body={
+				"employeeId": "EMP-0001",
+				"shiftType": "General",
+				"startDate": "2026-05-20",
+				"company": "Dhruvanta Systems",
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 428)
+		self.assertIn(b'"code":"HRMS_IDEMPOTENCY_KEY_REQUIRED"', response.data)
+
+	def test_roster_assignment_route_creates_shift_assignment(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/roster/assignments",
+			"Bearer good",
+			method="POST",
+			headers={"Idempotency-Key": "roster-idem-1"},
+			json_body={
+				"employeeId": "EMP-0001",
+				"shiftType": "General",
+				"startDate": "2026-05-20",
+				"endDate": "2026-05-21",
+				"company": "Dhruvanta Systems",
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 201)
+		self.assertIn(b'"status":"accepted"', response.data)
+		self.assertIn(b'"assignmentId":"Shift Assignment-0001"', response.data)
+		self.assertEqual(frappe.inserted_docs[0][0]["doctype"], "Shift Assignment")
+		self.assertEqual(frappe.inserted_docs[0][0]["employee"], "EMP-0001")
+		self.assertEqual(frappe.inserted_docs[0][0]["shift_type"], "General")
+
 
 if __name__ == "__main__":
 	unittest.main()

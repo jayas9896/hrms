@@ -266,7 +266,7 @@ paths:
             schema:
               $ref: "#/components/schemas/RosterAssignmentRequest"
       responses:
-        "202":
+        "201":
           description: Assignment accepted
           content:
             application/json:
@@ -542,18 +542,22 @@ components:
                 $ref: "#/components/schemas/RosterEvent"
     RosterAssignmentRequest:
       type: object
-      required: [employee_id, shift_type, start_date]
+      required: [employeeId, shiftType, startDate, company]
       properties:
-        employee_id:
+        employeeId:
           type: string
-        shift_type:
+        shiftType:
           type: string
-        start_date:
-          type: string
-          format: date
-        end_date:
+        startDate:
           type: string
           format: date
+        endDate:
+          type: string
+          format: date
+        company:
+          type: string
+        shiftLocation:
+          type: string
     PayrollSlip:
       type: object
       required: [id, employee_id, status]
@@ -635,6 +639,8 @@ components:
         checkinId:
           type: string
         leaveId:
+          type: string
+        assignmentId:
           type: string
         idempotencyKey:
           type: string

@@ -9,6 +9,7 @@ from hrms.service_auth.route_policy import ServiceRoutePolicy, UnsupportedServic
 from hrms.service_auth.service_handlers import (
 	create_attendance_checkin,
 	create_leave_application,
+	create_roster_assignment,
 	get_employee,
 	list_audit_events,
 	list_attendance,
@@ -144,6 +145,13 @@ def before_request(
 		raise FrappeServiceResponse(
 			list_roster_events(frappe, request, request_id=principal.jti)
 		)
+	if path == "/api/v1/service/hrms/roster/assignments":
+		body, status_code = create_roster_assignment(
+			frappe,
+			request,
+			request_id=principal.jti,
+		)
+		raise FrappeServiceResponse(body, status_code=status_code)
 	if path == "/api/v1/service/hrms/payroll/slips":
 		raise FrappeServiceResponse(
 			list_payroll_slips(frappe, request, request_id=principal.jti)
