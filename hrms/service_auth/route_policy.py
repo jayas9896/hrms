@@ -44,6 +44,11 @@ class ServiceRoutePolicy:
 				RouteRule("POST", "/api/v1/service/hrms/roster/assignments", "hrms:roster.write"),
 				RouteRule("GET", "/api/v1/service/hrms/payroll/slips", "hrms:payroll.read"),
 				RouteRule("GET", "/api/v1/service/hrms/audit-events", "hrms:audit.read"),
+				RouteRule(
+					"POST",
+					"/api/v1/service/hrms/activations/dhruvanta-one",
+					"hrms:activation.provision",
+				),
 			)
 		)
 

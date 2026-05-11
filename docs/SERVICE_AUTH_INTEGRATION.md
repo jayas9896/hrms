@@ -27,7 +27,8 @@ exist for `GET /api/v1/service/hrms/health`,
 `GET /api/v1/service/hrms/roster/events`,
 `POST /api/v1/service/hrms/roster/assignments`,
 `GET /api/v1/service/hrms/payroll/slips`, and
-`GET /api/v1/service/hrms/audit-events`; all currently locked service routes in
+`GET /api/v1/service/hrms/audit-events`, and
+`POST /api/v1/service/hrms/activations/dhruvanta-one`; all currently locked service routes in
 `hrms/service_auth/route_policy.py` have explicit handlers. The guard uses that
 route policy to reject non-contract method/path combinations before scope
 verification.
@@ -62,6 +63,7 @@ The contract follows `/home/jayas/dhruvanta-platform-governance/docs/standards/s
 | `hrms.read` | `hrms:employee.read`, `hrms:leave.read`, `hrms:attendance.read`, `hrms:payroll.read`, `hrms:roster.read` | Dhruvanta One and support read-only dashboards. |
 | `hrms.write` | `hrms:employee.write`, `hrms:leave.write`, `hrms:attendance.write`, `hrms:roster.write` | Controlled internal automation. |
 | `hrms.admin` | `hrms:admin.read`, `hrms:admin.write`, `hrms:audit.read` | Admin/support operations with additional human approval gates. |
+| `hrms.activation` | `hrms:activation.provision` | Dhruvanta One activation receiver with non-secret provisioning metadata. |
 
 ## Current Whitelisted Surfaces
 

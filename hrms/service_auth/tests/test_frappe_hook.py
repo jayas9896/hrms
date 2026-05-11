@@ -686,6 +686,43 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertEqual(frappe.inserted_docs[0][0]["employee"], "EMP-0001")
 		self.assertEqual(frappe.inserted_docs[0][0]["shift_type"], "General")
 
+	def test_dhruvanta_one_activation_route_records_activation_metadata(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/activations/dhruvanta-one",
+			"Bearer good",
+			method="POST",
+			json_body={
+				"dhruvantaOneTenantId": "33333333-3333-3333-3333-333333333333",
+				"tenantDomain": "acme.test",
+				"tenantName": "Acme Test",
+				"activationRequestId": "22222222-2222-2222-2222-222222222222",
+			},
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 201)
+		self.assertIn(b'"status":"accepted"', response.data)
+		self.assertIn(b'"tenantId":"33333333-3333-3333-3333-333333333333"', response.data)
+		self.assertIn(b'"activationRequestId":"22222222-2222-2222-2222-222222222222"', response.data)
+		self.assertEqual(frappe.inserted_docs[0][0]["doctype"], "Integration Request")
+		self.assertEqual(
+			frappe.inserted_docs[0][0]["integration_request_service"],
+			"dhruvanta-hrms-activation-dhruvanta-one",
+		)
+		self.assertEqual(
+			frappe.inserted_docs[0][0]["request_id"],
+			"33333333-3333-3333-3333-333333333333",
+		)
+		self.assertNotIn("reference_doctype", frappe.inserted_docs[0][0])
+		self.assertEqual(frappe.commit_calls, 1)
+
 
 if __name__ == "__main__":
 	unittest.main()

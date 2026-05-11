@@ -189,6 +189,49 @@ def list_audit_events(frappe: Any, request: Any, *, request_id: str | None) -> d
 	}
 
 
+def provision_dhruvanta_one_activation(
+		frappe: Any,
+		request: Any,
+		*,
+		request_id: str | None,
+) -> tuple[dict[str, Any], int]:
+	service = "dhruvanta-hrms-activation-dhruvanta-one"
+	body = _json_body(request)
+	tenant_id = str(body.get("dhruvantaOneTenantId") or "").strip()
+	activation_request_id = str(body.get("activationRequestId") or "").strip()
+	if not tenant_id:
+		return {
+			"request_id": request_id,
+			"code": "HRMS_ACTIVATION_TENANT_REQUIRED",
+			"message": "dhruvantaOneTenantId is required",
+		}, 400
+	if not activation_request_id:
+		return {
+			"request_id": request_id,
+			"code": "HRMS_ACTIVATION_REQUEST_REQUIRED",
+			"message": "activationRequestId is required",
+		}, 400
+
+	replayed = _find_completed_activation(frappe, service, tenant_id)
+	if replayed is not None:
+		replayed["request_id"] = request_id
+		replayed["replayed"] = True
+		return replayed, 200
+
+	result = {
+		"request_id": request_id,
+		"status": "accepted",
+		"tenantId": tenant_id,
+		"tenantDomain": body.get("tenantDomain"),
+		"tenantName": body.get("tenantName"),
+		"activationRequestId": activation_request_id,
+		"idempotent": True,
+	}
+	_record_completed_activation(frappe, service, tenant_id, result)
+	frappe.db.commit()
+	return result, 201
+
+
 def list_roster_events(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
 	args = getattr(request, "args", {})
 	limit = _bounded_limit(args.get("limit"))
@@ -491,11 +534,15 @@ def _invalid_request(request_id: str | None, missing_field: str) -> dict[str, An
 
 
 def _find_completed_idempotency(frappe: Any, key: str) -> dict[str, Any] | None:
+	return _find_completed_activation(frappe, "dhruvanta-hrms-service-auth", key)
+
+
+def _find_completed_activation(frappe: Any, service: str, key: str) -> dict[str, Any] | None:
 	rows = frappe.get_all(
 		"Integration Request",
 		fields=["name", "status", "output"],
 		filters={
-			"integration_request_service": "dhruvanta-hrms-service-auth",
+			"integration_request_service": service,
 			"request_id": key,
 		},
 		limit_page_length=1,
@@ -507,6 +554,25 @@ def _find_completed_idempotency(frappe: Any, key: str) -> dict[str, Any] | None:
 	except (TypeError, ValueError):
 		return None
 	return parsed if isinstance(parsed, dict) else None
+
+
+def _record_completed_activation(
+		frappe: Any,
+		service: str,
+		key: str,
+		output: dict[str, Any],
+) -> None:
+	doc = frappe.get_doc(
+		{
+			"doctype": "Integration Request",
+			"integration_request_service": service,
+			"request_id": key,
+			"status": "Completed",
+			"output": json.dumps(output, separators=(",", ":")),
+		}
+	)
+	doc.flags.ignore_permissions = True
+	doc.insert(ignore_permissions=True)
 
 
 def _record_completed_idempotency(

@@ -38,7 +38,8 @@ rejects non-contract routes fail-closed. The Frappe `before_request` guard is
 source-wired in `hrms/hooks.py`; hook-level handlers exist for health, employee
 directory, employee detail reads, leave list reads, leave creation writes, attendance list reads,
 attendance check-in writes, roster event reads, roster assignment writes,
-payroll slip reads, audit event reads, and employee import writes. Successful
+payroll slip reads, audit event reads, employee import writes, and Dhruvanta
+One activation provisioning metadata. Successful
 bearer-token public read and write smokes have passed through the gateway.
 
 ## Future Dhruvanta Service API
@@ -67,6 +68,7 @@ aud: hrms
 | `POST` | `/api/v1/service/hrms/roster/assignments` | `hrms:roster.write` | Admin shift planning. |
 | `GET` | `/api/v1/service/hrms/payroll/slips` | `hrms:payroll.read` | Employee payroll self-service and support lookup. |
 | `GET` | `/api/v1/service/hrms/audit-events` | `hrms:audit.read` | Dhruvanta One aggregated audit view. |
+| `POST` | `/api/v1/service/hrms/activations/dhruvanta-one` | `hrms:activation.provision` | Dhruvanta One service activation handoff. |
 
 ### Shared Request Rules
 
@@ -104,9 +106,6 @@ Support UI needs read-only search, impersonation-free diagnostics, audit history
 
 HRMS must not be marked fully self-service until these are complete:
 
-- Dhruvanta service-auth verifier is implemented and tested.
-- Successful bearer-token public smokes cover the locked
-  `/api/v1/service/hrms/*` routes.
 - Dhruvanta One onboarding can provision or link a Frappe workspace fail-closed.
 - Admin/support realms use Dhruvanta auth and TOTP, not shared Frappe administrator credentials.
 - Gateway route-registry tests cover HRMS route behavior.

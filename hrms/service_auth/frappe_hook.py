@@ -18,6 +18,7 @@ from hrms.service_auth.service_handlers import (
 	list_leaves,
 	list_payroll_slips,
 	list_roster_events,
+	provision_dhruvanta_one_activation,
 )
 from hrms.service_auth.verifier import (
 	JwksCache,
@@ -170,6 +171,13 @@ def before_request(
 		raise FrappeServiceResponse(
 			list_audit_events(frappe, request, request_id=principal.jti)
 		)
+	if path == "/api/v1/service/hrms/activations/dhruvanta-one":
+		body, status_code = provision_dhruvanta_one_activation(
+			frappe,
+			request,
+			request_id=principal.jti,
+		)
+		raise FrappeServiceResponse(body, status_code=status_code)
 	employee_prefix = "/api/v1/service/hrms/employees/"
 	if path.startswith(employee_prefix):
 		body, status_code = get_employee(

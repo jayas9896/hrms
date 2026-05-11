@@ -39,6 +39,10 @@ class ServiceRoutePolicyTests(unittest.TestCase):
 			policy.required_scope("GET", "/api/v1/service/hrms/audit-events?limit=50"),
 			"hrms:audit.read",
 		)
+		self.assertEqual(
+			policy.required_scope("POST", "/api/v1/service/hrms/activations/dhruvanta-one"),
+			"hrms:activation.provision",
+		)
 
 	def test_rejects_unknown_method_path_and_non_service_path(self) -> None:
 		policy = ServiceRoutePolicy.default()

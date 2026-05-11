@@ -4,8 +4,7 @@ info:
   version: 0.1.0-contract
   description: >
     Backend-first contract for Dhruvanta HRMS service-auth endpoints. These
-    endpoints are contract locked; all locked service routes are source-wired,
-    and successful bearer-token public smokes are still pending.
+    endpoints are contract locked; all locked service routes are source-wired.
 servers:
   - url: https://api.dhruvantasystems.net/hrms
 security:
@@ -321,6 +320,42 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/activations/dhruvanta-one:
+    post:
+      operationId: provisionHrmsDhruvantaOneActivation
+      summary: Accept Dhruvanta One activation provisioning metadata
+      security:
+        - serviceJwt:
+            - hrms:activation.provision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DhruvantaOneActivationRequest"
+      responses:
+        "201":
+          description: Activation metadata accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivationAcceptedResponse"
+        "200":
+          description: Activation metadata replayed idempotently
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivationAcceptedResponse"
+        "400":
+          description: Missing required activation metadata
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 components:
   securitySchemes:
     serviceJwt:
@@ -340,6 +375,7 @@ components:
             hrms:roster.write: Write roster assignments.
             hrms:payroll.read: Read payroll summaries and slips.
             hrms:audit.read: Read HRMS audit events.
+            hrms:activation.provision: Provision HRMS workspace activation metadata from Dhruvanta One.
   parameters:
     Cursor:
       name: cursor
@@ -659,6 +695,43 @@ components:
           type: string
         idempotencyKey:
           type: string
+    DhruvantaOneActivationRequest:
+      type: object
+      required: [dhruvantaOneTenantId, activationRequestId]
+      properties:
+        dhruvantaOneTenantId:
+          type: string
+          format: uuid
+        tenantDomain:
+          type: string
+        tenantName:
+          type: string
+        activationRequestId:
+          type: string
+          format: uuid
+    ActivationAcceptedResponse:
+      type: object
+      required: [status, request_id, tenantId, activationRequestId]
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        request_id:
+          type: string
+        tenantId:
+          type: string
+        tenantDomain:
+          type: string
+          nullable: true
+        tenantName:
+          type: string
+          nullable: true
+        activationRequestId:
+          type: string
+        idempotent:
+          type: boolean
+        replayed:
+          type: boolean
     Page:
       type: object
       required: [items, next_cursor, request_id]
