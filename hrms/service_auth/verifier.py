@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import json
 import time
 from typing import Any
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import jwt
 
@@ -177,8 +177,15 @@ def _scopes(claims: dict[str, Any]) -> set[str]:
 
 
 def _fetch_json(url: str) -> dict[str, Any]:
+	request = Request(
+		url,
+		headers={
+			"Accept": "application/json, application/jwk-set+json",
+			"User-Agent": "Dhruvanta-HRMS-ServiceAuth/1.0",
+		},
+	)
 	try:
-		with urlopen(url, timeout=5) as response:
+		with urlopen(request, timeout=5) as response:
 			payload = response.read().decode("utf-8")
 	except OSError as exc:
 		raise ServiceAuthError(503, "temporarily_unavailable", "jwks fetch failed") from exc
