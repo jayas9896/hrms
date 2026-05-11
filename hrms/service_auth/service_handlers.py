@@ -45,6 +45,17 @@ ROSTER_EVENT_FIELDS = (
 	"status",
 )
 
+PAYROLL_SLIP_FIELDS = (
+	"name",
+	"employee",
+	"employee_name",
+	"start_date",
+	"end_date",
+	"net_pay",
+	"gross_pay",
+	"status",
+)
+
 
 def list_employees(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
 	limit = _bounded_limit(getattr(request, "args", {}).get("limit"))
@@ -57,6 +68,28 @@ def list_employees(frappe: Any, request: Any, *, request_id: str | None) -> dict
 	return {
 		"request_id": request_id,
 		"items": [_employee_payload(row) for row in rows],
+		"limit": limit,
+		"nextCursor": None,
+	}
+
+
+def list_payroll_slips(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
+	args = getattr(request, "args", {})
+	limit = _bounded_limit(args.get("limit"))
+	filters = {}
+	employee_id = args.get("employeeId")
+	if employee_id:
+		filters["employee"] = employee_id
+	rows = frappe.get_all(
+		"Salary Slip",
+		fields=list(PAYROLL_SLIP_FIELDS),
+		filters=filters,
+		order_by="end_date desc, modified desc",
+		limit_page_length=limit,
+	)
+	return {
+		"request_id": request_id,
+		"items": [_payroll_slip_payload(row) for row in rows],
 		"limit": limit,
 		"nextCursor": None,
 	}
@@ -204,6 +237,19 @@ def _roster_event_payload(row: dict[str, Any]) -> dict[str, Any]:
 		"shiftType": row.get("shift_type"),
 		"startDate": _string_value(row.get("start_date")),
 		"endDate": _string_value(row.get("end_date")),
+		"status": row.get("status"),
+	}
+
+
+def _payroll_slip_payload(row: dict[str, Any]) -> dict[str, Any]:
+	return {
+		"salarySlipId": row.get("name"),
+		"employeeId": row.get("employee"),
+		"employeeName": row.get("employee_name"),
+		"startDate": _string_value(row.get("start_date")),
+		"endDate": _string_value(row.get("end_date")),
+		"netPay": row.get("net_pay"),
+		"grossPay": row.get("gross_pay"),
 		"status": row.get("status"),
 	}
 

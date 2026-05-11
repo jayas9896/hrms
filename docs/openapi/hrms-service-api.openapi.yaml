@@ -5,8 +5,8 @@ info:
   description: >
     Backend-first contract for Dhruvanta HRMS service-auth endpoints. These
     endpoints are contract locked; health, employee read, leave list,
-    attendance list, and roster event routes are source-wired, while the
-    remaining endpoints are not wired yet.
+    attendance list, roster event, and payroll slip routes are source-wired,
+    while the remaining endpoints are not wired yet.
 servers:
   - url: https://api.dhruvantasystems.net/hrms
 security:

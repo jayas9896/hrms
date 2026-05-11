@@ -56,6 +56,7 @@ class FakeFrappe:
 			leaves: list[dict[str, object]] | None = None,
 			attendance: list[dict[str, object]] | None = None,
 			roster_events: list[dict[str, object]] | None = None,
+			payroll_slips: list[dict[str, object]] | None = None,
 	) -> None:
 		self.local = SimpleNamespace(
 			request=SimpleNamespace(path=path, method="GET", args=args or {}),
@@ -67,6 +68,7 @@ class FakeFrappe:
 		self._leaves = leaves or []
 		self._attendance = attendance or []
 		self._roster_events = roster_events or []
+		self._payroll_slips = payroll_slips or []
 		self.get_all_calls = []
 		self.get_value_calls = []
 
@@ -83,6 +85,8 @@ class FakeFrappe:
 			return self._attendance
 		if doctype == "Shift Assignment":
 			return self._roster_events
+		if doctype == "Salary Slip":
+			return self._payroll_slips
 		return self._employees
 
 	def get_value(
@@ -125,7 +129,7 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertIn("WWW-Authenticate", frappe.local.response_headers)
 
 	def test_valid_service_request_sets_service_client(self) -> None:
-		frappe = FakeFrappe("/api/v1/service/hrms/payroll/slips", "Bearer good")
+		frappe = FakeFrappe("/api/v1/service/hrms/audit-events", "Bearer good")
 
 		before_request(
 			frappe_module=frappe,
@@ -339,6 +343,44 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertIn(b'"employeeId":"EMP-0001"', response.data)
 		self.assertEqual(frappe.get_all_calls[-1][0], "Shift Assignment")
 		self.assertEqual(frappe.get_all_calls[-1][1]["limit_page_length"], 30)
+		self.assertEqual(
+			frappe.get_all_calls[-1][1]["filters"],
+			{"employee": "EMP-0001"},
+		)
+
+	def test_payroll_slips_route_returns_payroll_payload(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/payroll/slips",
+			"Bearer good",
+			args={"limit": "10", "employeeId": "EMP-0001"},
+			payroll_slips=[
+				{
+					"name": "SAL-0001",
+					"employee": "EMP-0001",
+					"employee_name": "Ada Lovelace",
+					"start_date": "2026-05-01",
+					"end_date": "2026-05-31",
+					"net_pay": 125000,
+					"gross_pay": 150000,
+					"status": "Submitted",
+				}
+			],
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 200)
+		self.assertIn(b'"request_id":"jti-1"', response.data)
+		self.assertIn(b'"salarySlipId":"SAL-0001"', response.data)
+		self.assertIn(b'"employeeId":"EMP-0001"', response.data)
+		self.assertEqual(frappe.get_all_calls[-1][0], "Salary Slip")
+		self.assertEqual(frappe.get_all_calls[-1][1]["limit_page_length"], 10)
 		self.assertEqual(
 			frappe.get_all_calls[-1][1]["filters"],
 			{"employee": "EMP-0001"},

@@ -11,6 +11,7 @@ from hrms.service_auth.service_handlers import (
 	list_attendance,
 	list_employees,
 	list_leaves,
+	list_payroll_slips,
 	list_roster_events,
 )
 from hrms.service_auth.verifier import (
@@ -125,6 +126,10 @@ def before_request(
 	if path == "/api/v1/service/hrms/roster/events":
 		raise FrappeServiceResponse(
 			list_roster_events(frappe, request, request_id=principal.jti)
+		)
+	if path == "/api/v1/service/hrms/payroll/slips":
+		raise FrappeServiceResponse(
+			list_payroll_slips(frappe, request, request_id=principal.jti)
 		)
 	employee_prefix = "/api/v1/service/hrms/employees/"
 	if path.startswith(employee_prefix):
