@@ -34,7 +34,9 @@ The ES256/JWKS/scope verifier core is source-ready in
 `hrms/service_auth/verifier.py`, but the Frappe request hook, JWKS
 discovery/cache, and service handlers are not mounted yet. The verifier core
 includes issuer discovery, JWKS caching, and one-time `kid` miss refresh for key
-rotation readiness.
+rotation readiness. The source-ready route policy in
+`hrms/service_auth/route_policy.py` locks method/path-to-scope mapping and
+rejects non-contract routes fail-closed.
 
 ## Future Dhruvanta Service API
 

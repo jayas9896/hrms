@@ -13,7 +13,9 @@ REQUIRED_FILES = [
     "docs/contracts/hrms-service-api.md",
     "docs/openapi/hrms-service-api.openapi.yaml",
     "hrms/service_auth/verifier.py",
+    "hrms/service_auth/route_policy.py",
     "hrms/service_auth/tests/test_verifier.py",
+    "hrms/service_auth/tests/test_route_policy.py",
     "hrms/api/__init__.py",
     "hrms/api/oauth.py",
     "hrms/api/roster.py",
@@ -30,6 +32,7 @@ REQUIRED_DOC_TOKENS = {
         "hrms:employee.read",
         "hrms:attendance.write",
         "hrms/service_auth/verifier.py",
+        "hrms/service_auth/route_policy.py",
     ],
     "docs/contracts/hrms-service-api.md": [
         "CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET",
@@ -74,6 +77,12 @@ REQUIRED_SOURCE_TOKENS = {
         "force_refresh=True",
         "required_scope",
         "insufficient_scope",
+    ],
+    "hrms/service_auth/route_policy.py": [
+        "ServiceRoutePolicy",
+        "hrms:employee.read",
+        "hrms:audit.read",
+        "UnsupportedServiceRoute",
     ],
 }
 

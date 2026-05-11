@@ -75,7 +75,10 @@ Before changing the status from contract-locked to live:
 
 1. Mount the dedicated service-auth verifier from `hrms/service_auth/verifier.py`
    in a Frappe request hook.
-2. Add explicit route handlers for `/api/v1/service/hrms/*`.
-3. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
-4. Add OpenAPI examples and curl smoke commands.
-5. Update the governance registry and repo log in the same slice.
+2. Use `hrms/service_auth/route_policy.py` in the hook to fail closed when a
+   method/path is outside the locked service contract and to pass the required
+   endpoint scope into the verifier.
+3. Add explicit route handlers for `/api/v1/service/hrms/*`.
+4. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
+5. Add OpenAPI examples and curl smoke commands.
+6. Update the governance registry and repo log in the same slice.
