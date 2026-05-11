@@ -27,6 +27,25 @@
 
 Frappe HR has everything you need to drive excellence within the company. It's a complete HRMS solution with over 13 different modules right from Employee Management, Onboarding, Leaves, to Payroll, Taxation, and more!
 
+## Dhruvanta Backend Contract
+
+Dhruvanta HRMS is branded as Dhruvanta Systems first and powered by Frappe HR.
+The current backend runtime uses Frappe session/API-key behavior through
+`https://api.dhruvantasystems.net/hrms/api`.
+
+The future Dhruvanta service-to-service surface is contract-locked but not
+wired yet under `/api/v1/service/hrms/*`.
+
+- [Dhruvanta service-auth integration](docs/SERVICE_AUTH_INTEGRATION.md)
+- [Backend API contract](docs/contracts/hrms-service-api.md)
+- [OpenAPI contract](docs/openapi/hrms-service-api.openapi.yaml)
+
+Verify contract truthfulness with:
+
+```sh
+python3 scripts/verify-service-auth-contract.py
+```
+
 ## Motivation
 When Frappe team started growing in terms of size, we needed an open-source HR and Payroll software. We didn't find any "true" open-source HR software out there and so decided to build one ourselves.
 Initially, it was a set of modules within ERPNext but version 14 onwards, as the modules became more mature, Frappe HR was created as a separate product.
@@ -135,4 +154,3 @@ Please read our [Logo and Trademark Policy](TRADEMARK_POLICY.md).
 		</picture>
 	</a>
 </div>
-

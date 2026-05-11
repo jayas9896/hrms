@@ -1,0 +1,614 @@
+openapi: 3.0.3
+info:
+  title: Dhruvanta HRMS Service API
+  version: 0.1.0-contract
+  description: >
+    Backend-first contract for Dhruvanta HRMS service-auth endpoints. These
+    endpoints are contract locked and not wired yet.
+servers:
+  - url: https://api.dhruvantasystems.net/hrms
+security:
+  - serviceJwt: []
+paths:
+  /api/v1/service/hrms/health:
+    get:
+      operationId: getHrmsServiceHealth
+      summary: Check HRMS service readiness
+      security:
+        - serviceJwt:
+            - hrms:admin.read
+      responses:
+        "200":
+          description: HRMS service readiness
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/employees:
+    get:
+      operationId: listHrmsEmployees
+      summary: List employees visible to the calling service client
+      security:
+        - serviceJwt:
+            - hrms:employee.read
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeePage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createHrmsEmployee
+      summary: Create an employee through a controlled service workflow
+      security:
+        - serviceJwt:
+            - hrms:employee.write
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeCreateRequest"
+      responses:
+        "201":
+          description: Created employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/employees/{employeeId}:
+    get:
+      operationId: getHrmsEmployee
+      summary: Get employee details
+      security:
+        - serviceJwt:
+            - hrms:employee.read
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/leaves:
+    get:
+      operationId: listHrmsLeaves
+      summary: List leave applications
+      security:
+        - serviceJwt:
+            - hrms:leave.read
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Leave page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeavePage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createHrmsLeave
+      summary: Create a leave application
+      security:
+        - serviceJwt:
+            - hrms:leave.write
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveCreateRequest"
+      responses:
+        "201":
+          description: Created leave application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveApplication"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/attendance:
+    get:
+      operationId: listHrmsAttendance
+      summary: List attendance records
+      security:
+        - serviceJwt:
+            - hrms:attendance.read
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Attendance page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendancePage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/attendance/checkins:
+    post:
+      operationId: createHrmsAttendanceCheckin
+      summary: Create an attendance check-in
+      security:
+        - serviceJwt:
+            - hrms:attendance.write
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceCheckinRequest"
+      responses:
+        "202":
+          description: Check-in accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptedResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/roster/events:
+    get:
+      operationId: listHrmsRosterEvents
+      summary: List roster events
+      security:
+        - serviceJwt:
+            - hrms:roster.read
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Roster event page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RosterEventPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/roster/assignments:
+    post:
+      operationId: createHrmsRosterAssignment
+      summary: Create a roster assignment
+      security:
+        - serviceJwt:
+            - hrms:roster.write
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RosterAssignmentRequest"
+      responses:
+        "202":
+          description: Assignment accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptedResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/payroll/slips:
+    get:
+      operationId: listHrmsPayrollSlips
+      summary: List payroll slips
+      security:
+        - serviceJwt:
+            - hrms:payroll.read
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payroll slip page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayrollSlipPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/v1/service/hrms/audit-events:
+    get:
+      operationId: listHrmsAuditEvents
+      summary: List HRMS audit events for Dhruvanta One aggregation
+      security:
+        - serviceJwt:
+            - hrms:audit.read
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Audit event page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+components:
+  securitySchemes:
+    serviceJwt:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://scp.dhruvantasystems.net/oauth/token
+          scopes:
+            hrms:admin.read: Read HRMS service health and admin metadata.
+            hrms:employee.read: Read employee records.
+            hrms:employee.write: Write employee records.
+            hrms:leave.read: Read leave records.
+            hrms:leave.write: Write leave records.
+            hrms:attendance.read: Read attendance records.
+            hrms:attendance.write: Write attendance records.
+            hrms:roster.read: Read roster events.
+            hrms:roster.write: Write roster assignments.
+            hrms:payroll.read: Read payroll summaries and slips.
+            hrms:audit.read: Read HRMS audit events.
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 200
+  responses:
+    Unauthorized:
+      description: Missing or invalid service JWT
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: Valid service JWT without the required scope
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, request_id]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        request_id:
+          type: string
+        dependencies:
+          type: object
+          additionalProperties:
+            type: string
+    Employee:
+      type: object
+      required: [id, employee_name, status]
+      properties:
+        id:
+          type: string
+        employee_name:
+          type: string
+        designation:
+          type: string
+        department:
+          type: string
+        company:
+          type: string
+        status:
+          type: string
+    EmployeeCreateRequest:
+      type: object
+      required: [employee_name, company]
+      properties:
+        employee_name:
+          type: string
+        company:
+          type: string
+        user_email:
+          type: string
+          format: email
+        department:
+          type: string
+        designation:
+          type: string
+    EmployeePage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Employee"
+    LeaveApplication:
+      type: object
+      required: [id, employee_id, leave_type, status]
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        leave_type:
+          type: string
+        from_date:
+          type: string
+          format: date
+        to_date:
+          type: string
+          format: date
+        status:
+          type: string
+    LeaveCreateRequest:
+      type: object
+      required: [employee_id, leave_type, from_date, to_date]
+      properties:
+        employee_id:
+          type: string
+        leave_type:
+          type: string
+        from_date:
+          type: string
+          format: date
+        to_date:
+          type: string
+          format: date
+        reason:
+          type: string
+    LeavePage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/LeaveApplication"
+    AttendanceRecord:
+      type: object
+      required: [employee_id, attendance_date, status]
+      properties:
+        employee_id:
+          type: string
+        attendance_date:
+          type: string
+          format: date
+        status:
+          type: string
+    AttendancePage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/AttendanceRecord"
+    AttendanceCheckinRequest:
+      type: object
+      required: [employee_id, timestamp]
+      properties:
+        employee_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+        longitude:
+          type: number
+    RosterEvent:
+      type: object
+      required: [employee_id, date, shift_type]
+      properties:
+        employee_id:
+          type: string
+        date:
+          type: string
+          format: date
+        shift_type:
+          type: string
+        status:
+          type: string
+    RosterEventPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/RosterEvent"
+    RosterAssignmentRequest:
+      type: object
+      required: [employee_id, shift_type, start_date]
+      properties:
+        employee_id:
+          type: string
+        shift_type:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+    PayrollSlip:
+      type: object
+      required: [id, employee_id, status]
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        payroll_period:
+          type: string
+        net_pay:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+    PayrollSlipPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/PayrollSlip"
+    AuditEventPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+    AcceptedResponse:
+      type: object
+      required: [status, request_id]
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        request_id:
+          type: string
+    Page:
+      type: object
+      required: [items, next_cursor, request_id]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        next_cursor:
+          type: string
+          nullable: true
+        request_id:
+          type: string
+    Problem:
+      type: object
+      required: [type, title, status, code, request_id]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        request_id:
+          type: string
+
