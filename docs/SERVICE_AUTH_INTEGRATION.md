@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Service Auth Integration
 
-Status: **CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET**.
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HANDLERS NOT WIRED YET**.
 
 Dhruvanta HRMS currently serves the Frappe HR application and whitelisted Frappe methods through the gateway path:
 
@@ -15,7 +15,10 @@ The framework-neutral verifier core now lives in
 control plane, audience `hrms`, expiry, JWKS `kid`, and endpoint scopes. It
 also discovers and caches JWKS from the issuer metadata and refetches once on a
 `kid` miss so key rotation can recover without restarting Frappe. The Frappe
-request hook and `/api/v1/service/hrms/*` handlers are still not wired.
+`before_request` guard is source-wired in `hrms/hooks.py`; the
+`/api/v1/service/hrms/*` handlers are still not wired. The guard uses
+`hrms/service_auth/route_policy.py` to reject non-contract method/path
+combinations before scope verification.
 
 ## Locked Dhruvanta Service Contract
 
@@ -73,12 +76,7 @@ Frontend engineers must treat this current surface as Frappe-session based. Cust
 
 Before changing the status from contract-locked to live:
 
-1. Mount the dedicated service-auth verifier from `hrms/service_auth/verifier.py`
-   in a Frappe request hook.
-2. Use `hrms/service_auth/route_policy.py` in the hook to fail closed when a
-   method/path is outside the locked service contract and to pass the required
-   endpoint scope into the verifier.
-3. Add explicit route handlers for `/api/v1/service/hrms/*`.
-4. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
-5. Add OpenAPI examples and curl smoke commands.
-6. Update the governance registry and repo log in the same slice.
+1. Add explicit route handlers for `/api/v1/service/hrms/*`.
+2. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
+3. Add OpenAPI examples and curl smoke commands.
+4. Update the governance registry and repo log in the same slice.

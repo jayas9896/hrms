@@ -29,6 +29,12 @@ app_include_js = [
 ]
 app_include_css = "hrms.bundle.css"
 
+# Dhruvanta modification: fail-closed guard for the reserved
+# /api/v1/service/hrms/* service-auth surface before Frappe route dispatch.
+before_request = [
+	"hrms.service_auth.frappe_hook.before_request",
+]
+
 # website
 
 # include js, css files in header of web template

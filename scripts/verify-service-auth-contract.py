@@ -14,8 +14,10 @@ REQUIRED_FILES = [
     "docs/openapi/hrms-service-api.openapi.yaml",
     "hrms/service_auth/verifier.py",
     "hrms/service_auth/route_policy.py",
+    "hrms/service_auth/frappe_hook.py",
     "hrms/service_auth/tests/test_verifier.py",
     "hrms/service_auth/tests/test_route_policy.py",
+    "hrms/service_auth/tests/test_frappe_hook.py",
     "hrms/api/__init__.py",
     "hrms/api/oauth.py",
     "hrms/api/roster.py",
@@ -24,7 +26,7 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HANDLERS NOT WIRED YET",
         "audience is:",
         "hrms",
         "fail closed",
@@ -33,15 +35,17 @@ REQUIRED_DOC_TOKENS = {
         "hrms:attendance.write",
         "hrms/service_auth/verifier.py",
         "hrms/service_auth/route_policy.py",
+        "before_request",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HANDLERS NOT WIRED YET",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",
         "permission_denied",
         "Idempotency-Key",
         "hrms/service_auth/verifier.py",
+        "hrms/hooks.py",
     ],
     "docs/openapi/hrms-service-api.openapi.yaml": [
         "operationId: listHrmsEmployees",
@@ -83,6 +87,15 @@ REQUIRED_SOURCE_TOKENS = {
         "hrms:employee.read",
         "hrms:audit.read",
         "UnsupportedServiceRoute",
+    ],
+    "hrms/service_auth/frappe_hook.py": [
+        "def before_request",
+        "frappe.local.service_client",
+        "WWW-Authenticate",
+    ],
+    "hrms/hooks.py": [
+        "Dhruvanta modification",
+        "hrms.service_auth.frappe_hook.before_request",
     ],
 }
 
