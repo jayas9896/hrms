@@ -27,7 +27,7 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC READ/WRITE SMOKES PASSED",
         "audience is:",
         "hrms",
         "fail closed",
@@ -51,7 +51,7 @@ REQUIRED_DOC_TOKENS = {
         "before_request",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC READ/WRITE SMOKES PASSED",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",

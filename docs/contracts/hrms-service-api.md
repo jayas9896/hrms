@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Backend API Contract
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING** for
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC READ/WRITE SMOKES PASSED** for
 `/api/v1/service/hrms/*`.
 
 This document is the backend-first contract for Dhruvanta HRMS. It records what frontend shells can assume today and what backend routes must provide before HRMS is marked self-service in Dhruvanta One.
@@ -39,7 +39,7 @@ source-wired in `hrms/hooks.py`; hook-level handlers exist for health, employee
 directory, employee detail reads, leave list reads, leave creation writes, attendance list reads,
 attendance check-in writes, roster event reads, roster assignment writes,
 payroll slip reads, audit event reads, and employee import writes. Successful
-bearer-token public smokes remain pending.
+bearer-token public read and write smokes have passed through the gateway.
 
 ## Future Dhruvanta Service API
 

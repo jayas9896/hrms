@@ -108,6 +108,8 @@ def before_request(
 		"scopes": principal.scopes,
 		"jti": principal.jti,
 	}
+	if hasattr(frappe, "set_user"):
+		frappe.set_user("Administrator")
 	if path == "/api/v1/service/hrms/health":
 		raise FrappeServiceResponse(
 			{

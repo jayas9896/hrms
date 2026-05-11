@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Service Auth Integration
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC SMOKES PENDING**.
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; ALL LOCKED SERVICE ROUTES SOURCE-WIRED; BEARER-TOKEN PUBLIC READ/WRITE SMOKES PASSED**.
 
 Dhruvanta HRMS currently serves the Frappe HR application and whitelisted Frappe methods through the gateway path:
 
@@ -86,10 +86,27 @@ Frontend engineers must treat this current surface as Frappe-session based. Cust
 
 ## Implementation Gate
 
-Before changing the status from contract-locked to live:
+Current status: the locked service-auth routes are source-wired and public
+bearer-token read/write smokes have passed. Before adding new routes or
+changing the contract:
 
 1. Run successful bearer-token public smokes for the locked
    `/api/v1/service/hrms/*` routes with real SCP service-client tokens.
 2. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
 3. Add OpenAPI examples and curl smoke commands.
 4. Update the governance registry and repo log in the same slice.
+
+Before write smokes on a fresh shared Frappe bench, seed minimal HRMS master
+data:
+
+```bash
+taskset -c 0 nice -n 15 \
+  /home/jayas/frappe-bench/env/bin/python \
+  /home/jayas/hrms_root/hrms/scripts/seed-frappe-hrms-master-data.py \
+  --bench /home/jayas/frappe-bench \
+  --site erp.localhost
+```
+
+Use `Dhruvanta Unpaid Leave` for leave write smokes when no paid leave
+allocation exists yet; it is seeded as leave-without-pay so the smoke does not
+depend on payroll policy setup.

@@ -84,6 +84,15 @@ class FakeFrappe:
 		self.get_all_calls = []
 		self.get_value_calls = []
 		self.inserted_docs = []
+		self.commit_calls = 0
+		self.user = "Guest"
+		self.db = SimpleNamespace(commit=self._commit)
+
+	def _commit(self) -> None:
+		self.commit_calls += 1
+
+	def set_user(self, user: str) -> None:
+		self.user = user
 
 	def get_request_header(self, name: str) -> str | None:
 		if name.lower() == "authorization":
@@ -123,9 +132,10 @@ class FakeFrappe:
 			def __init__(self, data: dict[str, object]) -> None:
 				self.data = data
 				self.name = str(data.get("name") or f"{data.get('doctype')}-0001")
+				self.flags = SimpleNamespace(ignore_permissions=False)
 
 			def insert(self, ignore_permissions: bool = False) -> object:
-				frappe.inserted_docs.append((self.data, ignore_permissions))
+				frappe.inserted_docs.append((self.data, ignore_permissions, self.flags.ignore_permissions))
 				return self
 
 		return FakeDoc(payload)
@@ -172,6 +182,7 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertEqual(frappe.local.service_client["id"], "dhruvanta-one")
 		self.assertEqual(frappe.local.service_client["scopes"], ("hrms:employee.read",))
 		self.assertEqual(frappe.local.service_client["jti"], "jti-1")
+		self.assertEqual(frappe.user, "Administrator")
 
 	def test_health_route_returns_json_response_from_hook(self) -> None:
 		frappe = FakeFrappe("/api/v1/service/hrms/health", "Bearer good")
@@ -327,6 +338,8 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertEqual(frappe.inserted_docs[0][0]["doctype"], "Employee")
 		self.assertEqual(frappe.inserted_docs[0][0]["first_name"], "Ada")
 		self.assertEqual(frappe.inserted_docs[0][0]["company"], "Dhruvanta Systems")
+		self.assertTrue(frappe.inserted_docs[0][2])
+		self.assertEqual(frappe.commit_calls, 1)
 
 	def test_leave_list_route_returns_leave_payload(self) -> None:
 		frappe = FakeFrappe(

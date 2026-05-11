@@ -122,7 +122,8 @@ def create_employee(
 	if missing:
 		return _invalid_request(request_id, missing[0]), 400
 
-	employee = frappe.get_doc(
+	employee = _insert_doc(
+		frappe,
 		{
 			"doctype": "Employee",
 			"first_name": first_name,
@@ -137,8 +138,8 @@ def create_employee(
 			"user_id": body.get("userId") or body.get("user_id"),
 			"department": body.get("department"),
 			"designation": body.get("designation"),
-		}
-	).insert(ignore_permissions=True)
+		},
+	)
 	response = {
 		"request_id": request_id,
 		"status": "accepted",
@@ -146,6 +147,7 @@ def create_employee(
 		"idempotencyKey": idempotency_key,
 	}
 	_record_completed_idempotency(frappe, idempotency_key, response, "Employee", employee.name)
+	frappe.db.commit()
 	return response, 201
 
 
@@ -240,7 +242,8 @@ def create_roster_assignment(
 	if missing:
 		return _invalid_request(request_id, missing[0]), 400
 
-	assignment = frappe.get_doc(
+	assignment = _insert_doc(
+		frappe,
 		{
 			"doctype": "Shift Assignment",
 			"employee": employee_id,
@@ -251,8 +254,8 @@ def create_roster_assignment(
 			"status": body.get("status") or "Active",
 			"shift_location": body.get("shiftLocation") or body.get("shift_location"),
 			"overtime_type": body.get("overtimeType") or body.get("overtime_type"),
-		}
-	).insert(ignore_permissions=True)
+		},
+	)
 	response = {
 		"request_id": request_id,
 		"status": "accepted",
@@ -260,6 +263,7 @@ def create_roster_assignment(
 		"idempotencyKey": idempotency_key,
 	}
 	_record_completed_idempotency(frappe, idempotency_key, response, "Shift Assignment", assignment.name)
+	frappe.db.commit()
 	return response, 201
 
 
@@ -312,7 +316,8 @@ def create_attendance_checkin(
 	if missing:
 		return _invalid_request(request_id, missing[0]), 400
 
-	checkin = frappe.get_doc(
+	checkin = _insert_doc(
+		frappe,
 		{
 			"doctype": "Employee Checkin",
 			"employee": employee_id,
@@ -321,8 +326,8 @@ def create_attendance_checkin(
 			"device_id": body.get("deviceId") or body.get("device_id"),
 			"latitude": body.get("latitude"),
 			"longitude": body.get("longitude"),
-		}
-	).insert(ignore_permissions=True)
+		},
+	)
 	response = {
 		"request_id": request_id,
 		"status": "accepted",
@@ -330,6 +335,7 @@ def create_attendance_checkin(
 		"idempotencyKey": idempotency_key,
 	}
 	_record_completed_idempotency(frappe, idempotency_key, response, "Employee Checkin", checkin.name)
+	frappe.db.commit()
 	return response, 201
 
 
@@ -388,7 +394,8 @@ def create_leave_application(
 	if missing:
 		return _invalid_request(request_id, missing[0]), 400
 
-	leave = frappe.get_doc(
+	leave = _insert_doc(
+		frappe,
 		{
 			"doctype": "Leave Application",
 			"naming_series": body.get("namingSeries") or "HR-LAP-.YYYY.-",
@@ -402,8 +409,8 @@ def create_leave_application(
 			"company": company,
 			"posting_date": body.get("postingDate") or body.get("posting_date") or date.today().isoformat(),
 			"status": body.get("status") or "Open",
-		}
-	).insert(ignore_permissions=True)
+		},
+	)
 	response = {
 		"request_id": request_id,
 		"status": "accepted",
@@ -411,6 +418,7 @@ def create_leave_application(
 		"idempotencyKey": idempotency_key,
 	}
 	_record_completed_idempotency(frappe, idempotency_key, response, "Leave Application", leave.name)
+	frappe.db.commit()
 	return response, 201
 
 
@@ -444,6 +452,13 @@ def _bounded_limit(raw: object) -> int:
 	except ValueError:
 		return 50
 	return min(max(parsed, 1), 100)
+
+
+def _insert_doc(frappe: Any, payload: dict[str, Any]) -> Any:
+	doc = frappe.get_doc(payload)
+	doc.flags.ignore_permissions = True
+	doc = doc.insert(ignore_permissions=True)
+	return doc
 
 
 def _header(frappe: Any, name: str) -> str | None:
