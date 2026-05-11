@@ -70,6 +70,8 @@ REQUIRED_SOURCE_TOKENS = {
     "hrms/service_auth/verifier.py": [
         "EXPECTED_AUDIENCE = \"hrms\"",
         "algorithms=[\"ES256\"]",
+        "JwksCache",
+        "force_refresh=True",
         "required_scope",
         "insufficient_scope",
     ],

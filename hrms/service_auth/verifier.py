@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import time
 from typing import Any
+from urllib.request import urlopen
 
 import jwt
 
@@ -30,6 +32,45 @@ class ServiceAuthError(Exception):
 	@property
 	def www_authenticate(self) -> str:
 		return f'Bearer error="{self.error}", error_description="{self.description}"'
+
+
+class JwksCache:
+	"""Discovery-backed JWKS cache for the future Frappe request hook."""
+
+	def __init__(
+		self,
+		issuer_base_url: str = EXPECTED_ISSUER,
+		*,
+		fetch_json: Any | None = None,
+		ttl_seconds: int = 300,
+	) -> None:
+		self.issuer_base_url = issuer_base_url.rstrip("/")
+		self.fetch_json = fetch_json or _fetch_json
+		self.ttl_seconds = max(1, ttl_seconds)
+		self._jwks_uri: str | None = None
+		self._jwks: dict[str, Any] | None = None
+		self._expires_at = 0.0
+
+	def get_jwks(self, *, force_refresh: bool = False) -> dict[str, Any]:
+		now = time.time()
+		if not force_refresh and self._jwks is not None and now < self._expires_at:
+			return self._jwks
+		jwks_uri = self._jwks_uri or self._discover_jwks_uri()
+		jwks = self.fetch_json(jwks_uri)
+		if not isinstance(jwks, dict) or not isinstance(jwks.get("keys"), list):
+			raise ServiceAuthError(503, "temporarily_unavailable", "jwks response invalid")
+		self._jwks = jwks
+		self._expires_at = now + self.ttl_seconds
+		return jwks
+
+	def _discover_jwks_uri(self) -> str:
+		discovery_url = f"{self.issuer_base_url}/.well-known/openid-configuration"
+		discovery = self.fetch_json(discovery_url)
+		jwks_uri = discovery.get("jwks_uri") if isinstance(discovery, dict) else None
+		if not isinstance(jwks_uri, str) or not jwks_uri:
+			raise ServiceAuthError(503, "temporarily_unavailable", "issuer discovery missing jwks_uri")
+		self._jwks_uri = jwks_uri
+		return jwks_uri
 
 
 def extract_bearer_token(authorization_header: str | None) -> str:
@@ -80,6 +121,34 @@ def verify_service_token(
 	return ServicePrincipal(client_id=client_id, scopes=tuple(sorted(scopes)), jti=str(jti) if jti else None)
 
 
+def verify_service_token_with_jwks_cache(
+	token: str,
+	*,
+	jwks_cache: JwksCache,
+	required_scope: str | None = None,
+	issuer: str = EXPECTED_ISSUER,
+	audience: str = EXPECTED_AUDIENCE,
+) -> ServicePrincipal:
+	try:
+		return verify_service_token(
+			token,
+			jwks=jwks_cache.get_jwks(),
+			required_scope=required_scope,
+			issuer=issuer,
+			audience=audience,
+		)
+	except ServiceAuthError as exc:
+		if exc.status_code != 503 or exc.description != "jwks key unavailable":
+			raise
+		return verify_service_token(
+			token,
+			jwks=jwks_cache.get_jwks(force_refresh=True),
+			required_scope=required_scope,
+			issuer=issuer,
+			audience=audience,
+		)
+
+
 def _key_for_token(token: str, jwks: dict[str, Any]) -> Any:
 	try:
 		header = jwt.get_unverified_header(token)
@@ -105,3 +174,15 @@ def _scopes(claims: dict[str, Any]) -> set[str]:
 	if isinstance(scp, list):
 		return {str(item) for item in scp if str(item)}
 	return set()
+
+
+def _fetch_json(url: str) -> dict[str, Any]:
+	try:
+		with urlopen(url, timeout=5) as response:
+			payload = response.read().decode("utf-8")
+	except OSError as exc:
+		raise ServiceAuthError(503, "temporarily_unavailable", "jwks fetch failed") from exc
+	data = json.loads(payload)
+	if not isinstance(data, dict):
+		raise ServiceAuthError(503, "temporarily_unavailable", "json response invalid")
+	return data

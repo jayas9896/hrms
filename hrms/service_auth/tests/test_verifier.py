@@ -21,9 +21,11 @@ SPEC.loader.exec_module(verifier)
 
 EXPECTED_AUDIENCE = verifier.EXPECTED_AUDIENCE
 EXPECTED_ISSUER = verifier.EXPECTED_ISSUER
+JwksCache = verifier.JwksCache
 ServiceAuthError = verifier.ServiceAuthError
 extract_bearer_token = verifier.extract_bearer_token
 verify_service_token = verifier.verify_service_token
+verify_service_token_with_jwks_cache = verifier.verify_service_token_with_jwks_cache
 
 
 class ServiceAuthVerifierTests(unittest.TestCase):
@@ -88,6 +90,48 @@ class ServiceAuthVerifierTests(unittest.TestCase):
 		with self.assertRaises(ServiceAuthError) as expired:
 			verify_service_token(self.token(exp=int(time.time()) - 1), jwks=self.jwks)
 		self.assertEqual(expired.exception.status_code, 401)
+
+	def test_jwks_cache_uses_discovery_and_refreshes_on_kid_miss(self) -> None:
+		second_private_key = ec.generate_private_key(ec.SECP256R1())
+		second_jwk = jwt.algorithms.ECAlgorithm.to_jwk(second_private_key.public_key(), as_dict=True)
+		second_jwk.update({"kid": "hrms-rotated-key", "use": "sig", "alg": "ES256"})
+		first_jwks = {"keys": []}
+		second_jwks = {"keys": [second_jwk]}
+		fetches: list[str] = []
+
+		def fetch_json(url: str) -> dict[str, object]:
+			fetches.append(url)
+			if url.endswith("/.well-known/openid-configuration"):
+				return {"jwks_uri": "https://scp.example.test/jwks"}
+			if url == "https://scp.example.test/jwks":
+				return first_jwks if fetches.count(url) == 1 else second_jwks
+			raise AssertionError(f"unexpected URL {url}")
+
+		cache = JwksCache("https://scp.example.test", fetch_json=fetch_json, ttl_seconds=300)
+		now = int(time.time())
+		token = jwt.encode(
+			{
+				"iss": EXPECTED_ISSUER,
+				"aud": EXPECTED_AUDIENCE,
+				"sub": "dhruvanta-one",
+				"scope": "hrms:employee.read",
+				"iat": now,
+				"exp": now + 300,
+			},
+			second_private_key,
+			algorithm="ES256",
+			headers={"kid": "hrms-rotated-key"},
+		)
+
+		principal = verify_service_token_with_jwks_cache(
+			token,
+			jwks_cache=cache,
+			required_scope="hrms:employee.read",
+		)
+
+		self.assertEqual(principal.client_id, "dhruvanta-one")
+		self.assertEqual(fetches.count("https://scp.example.test/.well-known/openid-configuration"), 1)
+		self.assertEqual(fetches.count("https://scp.example.test/jwks"), 2)
 
 
 if __name__ == "__main__":

@@ -32,7 +32,9 @@ Authenticated calls require the current Frappe session/API-key mechanism. Guest 
 
 The ES256/JWKS/scope verifier core is source-ready in
 `hrms/service_auth/verifier.py`, but the Frappe request hook, JWKS
-discovery/cache, and service handlers are not mounted yet.
+discovery/cache, and service handlers are not mounted yet. The verifier core
+includes issuer discovery, JWKS caching, and one-time `kid` miss refresh for key
+rotation readiness.
 
 ## Future Dhruvanta Service API
 
