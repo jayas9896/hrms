@@ -55,6 +55,7 @@ class FakeFrappe:
 			employee: dict[str, object] | None = None,
 			leaves: list[dict[str, object]] | None = None,
 			attendance: list[dict[str, object]] | None = None,
+			roster_events: list[dict[str, object]] | None = None,
 	) -> None:
 		self.local = SimpleNamespace(
 			request=SimpleNamespace(path=path, method="GET", args=args or {}),
@@ -65,6 +66,7 @@ class FakeFrappe:
 		self._employee = employee
 		self._leaves = leaves or []
 		self._attendance = attendance or []
+		self._roster_events = roster_events or []
 		self.get_all_calls = []
 		self.get_value_calls = []
 
@@ -79,6 +81,8 @@ class FakeFrappe:
 			return self._leaves
 		if doctype == "Attendance":
 			return self._attendance
+		if doctype == "Shift Assignment":
+			return self._roster_events
 		return self._employees
 
 	def get_value(
@@ -121,7 +125,7 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertIn("WWW-Authenticate", frappe.local.response_headers)
 
 	def test_valid_service_request_sets_service_client(self) -> None:
-		frappe = FakeFrappe("/api/v1/service/hrms/roster/events", "Bearer good")
+		frappe = FakeFrappe("/api/v1/service/hrms/payroll/slips", "Bearer good")
 
 		before_request(
 			frappe_module=frappe,
@@ -298,6 +302,43 @@ class FrappeHookTests(unittest.TestCase):
 		self.assertIn(b'"employeeId":"EMP-0001"', response.data)
 		self.assertEqual(frappe.get_all_calls[-1][0], "Attendance")
 		self.assertEqual(frappe.get_all_calls[-1][1]["limit_page_length"], 15)
+		self.assertEqual(
+			frappe.get_all_calls[-1][1]["filters"],
+			{"employee": "EMP-0001"},
+		)
+
+	def test_roster_events_route_returns_roster_payload(self) -> None:
+		frappe = FakeFrappe(
+			"/api/v1/service/hrms/roster/events",
+			"Bearer good",
+			args={"limit": "30", "employeeId": "EMP-0001"},
+			roster_events=[
+				{
+					"name": "SHIFT-0001",
+					"employee": "EMP-0001",
+					"employee_name": "Ada Lovelace",
+					"shift_type": "General",
+					"start_date": "2026-05-10",
+					"end_date": "2026-05-10",
+					"status": "Active",
+				}
+			],
+		)
+
+		with self.assertRaises(Exception) as raised:
+			before_request(
+				frappe_module=frappe,
+				jwks_cache=StaticCache(FakePrincipal()),
+				verify_token=lambda token, jwks_cache, required_scope: jwks_cache.principal,
+			)
+
+		response = raised.exception.get_response({})
+		self.assertEqual(response.status_code, 200)
+		self.assertIn(b'"request_id":"jti-1"', response.data)
+		self.assertIn(b'"eventId":"SHIFT-0001"', response.data)
+		self.assertIn(b'"employeeId":"EMP-0001"', response.data)
+		self.assertEqual(frappe.get_all_calls[-1][0], "Shift Assignment")
+		self.assertEqual(frappe.get_all_calls[-1][1]["limit_page_length"], 30)
 		self.assertEqual(
 			frappe.get_all_calls[-1][1]["filters"],
 			{"employee": "EMP-0001"},

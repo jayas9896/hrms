@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Service Auth Integration
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, AND ATTENDANCE LIST SOURCE-WIRED**.
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, AND ROSTER EVENTS SOURCE-WIRED**.
 
 Dhruvanta HRMS currently serves the Frappe HR application and whitelisted Frappe methods through the gateway path:
 
@@ -20,8 +20,9 @@ exist for `GET /api/v1/service/hrms/health`,
 `GET /api/v1/service/hrms/employees`, and
 `GET /api/v1/service/hrms/employees/{employeeId}`, plus
 `GET /api/v1/service/hrms/leaves` and
-`GET /api/v1/service/hrms/attendance`; the remaining service routes are still
-not wired. The guard uses `hrms/service_auth/route_policy.py` to reject
+`GET /api/v1/service/hrms/attendance` and
+`GET /api/v1/service/hrms/roster/events`; the remaining service routes are
+still not wired. The guard uses `hrms/service_auth/route_policy.py` to reject
 non-contract method/path combinations before scope verification.
 
 ## Locked Dhruvanta Service Contract
@@ -81,7 +82,8 @@ Frontend engineers must treat this current surface as Frappe-session based. Cust
 Before changing the status from contract-locked to live:
 
 1. Add explicit route handlers for the remaining `/api/v1/service/hrms/*`
-   routes beyond health, employee reads, leave list, and attendance list.
+   routes beyond health, employee reads, leave list, attendance list, and
+   roster events.
 2. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
 3. Add OpenAPI examples and curl smoke commands.
 4. Update the governance registry and repo log in the same slice.

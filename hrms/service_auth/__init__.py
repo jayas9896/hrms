@@ -1,6 +1,6 @@
 """Dhruvanta HRMS service-auth package.
 
 The verifier, Frappe hook, health responder, employee-read responders,
-leave-list responder, and attendance-list responder are source-ready.
-Remaining ``/api/v1/service/hrms/*`` handlers are pending.
+leave-list responder, attendance-list responder, and roster-event responder
+are source-ready. Remaining ``/api/v1/service/hrms/*`` handlers are pending.
 """

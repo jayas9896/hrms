@@ -27,7 +27,7 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, AND ATTENDANCE LIST SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, AND ROSTER EVENTS SOURCE-WIRED",
         "audience is:",
         "hrms",
         "fail closed",
@@ -36,6 +36,7 @@ REQUIRED_DOC_TOKENS = {
         "GET /api/v1/service/hrms/employees/{employeeId}",
         "GET /api/v1/service/hrms/leaves",
         "GET /api/v1/service/hrms/attendance",
+        "GET /api/v1/service/hrms/roster/events",
         "remaining service routes",
         "hrms:employee.read",
         "hrms:attendance.write",
@@ -44,7 +45,7 @@ REQUIRED_DOC_TOKENS = {
         "before_request",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, AND ATTENDANCE LIST SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, LEAVE LIST, ATTENDANCE LIST, AND ROSTER EVENTS SOURCE-WIRED",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",
@@ -56,6 +57,7 @@ REQUIRED_DOC_TOKENS = {
         "employee detail",
         "leave list",
         "attendance list",
+        "roster event",
     ],
     "docs/openapi/hrms-service-api.openapi.yaml": [
         "operationId: listHrmsEmployees",
@@ -106,17 +108,20 @@ REQUIRED_SOURCE_TOKENS = {
         "get_employee",
         "list_leaves",
         "list_attendance",
+        "list_roster_events",
     ],
     "hrms/service_auth/service_handlers.py": [
         "def list_employees",
         "def get_employee",
         "def list_leaves",
         "def list_attendance",
+        "def list_roster_events",
         "frappe.get_all",
         "frappe.get_value",
         "Employee",
         "Leave Application",
         "Attendance",
+        "Shift Assignment",
         "limit_page_length",
     ],
     "hrms/hooks.py": [
