@@ -6,7 +6,7 @@ import json
 from typing import Any, Callable
 
 from hrms.service_auth.route_policy import ServiceRoutePolicy, UnsupportedServiceRoute
-from hrms.service_auth.service_handlers import list_employees
+from hrms.service_auth.service_handlers import get_employee, list_employees
 from hrms.service_auth.verifier import (
 	JwksCache,
 	ServiceAuthError,
@@ -108,6 +108,14 @@ def before_request(
 		raise FrappeServiceResponse(
 			list_employees(frappe, request, request_id=principal.jti)
 		)
+	employee_prefix = "/api/v1/service/hrms/employees/"
+	if path.startswith(employee_prefix):
+		body, status_code = get_employee(
+			frappe,
+			path.removeprefix(employee_prefix),
+			request_id=principal.jti,
+		)
+		raise FrappeServiceResponse(body, status_code=status_code)
 
 
 def _set_authenticate_header(frappe: Any, value: str) -> None:

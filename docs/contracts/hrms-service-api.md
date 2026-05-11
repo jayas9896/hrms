@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Backend API Contract
 
-Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH AND EMPLOYEE LIST SOURCE-WIRED** for
+Status: **CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH AND EMPLOYEE READ SOURCE-WIRED** for
 `/api/v1/service/hrms/*`.
 
 This document is the backend-first contract for Dhruvanta HRMS. It records what frontend shells can assume today and what backend routes must provide before HRMS is marked self-service in Dhruvanta One.
@@ -35,8 +35,9 @@ The ES256/JWKS/scope verifier core is source-ready in
 one-time `kid` miss refresh for key rotation readiness. The source-ready route policy in
 `hrms/service_auth/route_policy.py` locks method/path-to-scope mapping and
 rejects non-contract routes fail-closed. The Frappe `before_request` guard is
-source-wired in `hrms/hooks.py`; hook-level handlers exist for health and the
-employee directory, while the remaining locked routes are still pending.
+source-wired in `hrms/hooks.py`; hook-level handlers exist for health, employee
+directory, and employee detail reads, while the remaining locked routes are
+still pending.
 
 ## Future Dhruvanta Service API
 

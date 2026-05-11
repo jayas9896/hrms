@@ -32,6 +32,30 @@ def list_employees(frappe: Any, request: Any, *, request_id: str | None) -> dict
 	}
 
 
+def get_employee(
+		frappe: Any,
+		employee_id: str,
+		*,
+		request_id: str | None,
+) -> tuple[dict[str, Any], int]:
+	row = frappe.get_value(
+		"Employee",
+		employee_id,
+		fieldname=list(EMPLOYEE_FIELDS),
+		as_dict=True,
+	)
+	if row is None:
+		return {
+			"request_id": request_id,
+			"code": "HRMS_EMPLOYEE_NOT_FOUND",
+			"message": "Employee not found",
+		}, 404
+	return {
+		"request_id": request_id,
+		"employee": _employee_payload(row),
+	}, 200
+
+
 def _bounded_limit(raw: object) -> int:
 	try:
 		parsed = int(str(raw)) if raw is not None else 50
