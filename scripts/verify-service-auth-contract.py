@@ -27,13 +27,14 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH AND EMPLOYEE READ SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, AND LEAVE LIST SOURCE-WIRED",
         "audience is:",
         "hrms",
         "fail closed",
         "/api/v1/service/hrms/*",
         "GET /api/v1/service/hrms/employees",
         "GET /api/v1/service/hrms/employees/{employeeId}",
+        "GET /api/v1/service/hrms/leaves",
         "remaining service routes",
         "hrms:employee.read",
         "hrms:attendance.write",
@@ -42,7 +43,7 @@ REQUIRED_DOC_TOKENS = {
         "before_request",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH AND EMPLOYEE READ SOURCE-WIRED",
+        "CONTRACT LOCKED; AUTH GUARD SOURCE-WIRED; HEALTH, EMPLOYEE READ, AND LEAVE LIST SOURCE-WIRED",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",
@@ -52,6 +53,7 @@ REQUIRED_DOC_TOKENS = {
         "hrms/hooks.py",
         "Employee directory",
         "employee detail",
+        "leave list",
     ],
     "docs/openapi/hrms-service-api.openapi.yaml": [
         "operationId: listHrmsEmployees",
@@ -100,13 +102,16 @@ REQUIRED_SOURCE_TOKENS = {
         "WWW-Authenticate",
         "list_employees",
         "get_employee",
+        "list_leaves",
     ],
     "hrms/service_auth/service_handlers.py": [
         "def list_employees",
         "def get_employee",
+        "def list_leaves",
         "frappe.get_all",
         "frappe.get_value",
         "Employee",
+        "Leave Application",
         "limit_page_length",
     ],
     "hrms/hooks.py": [

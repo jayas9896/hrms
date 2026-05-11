@@ -15,6 +15,17 @@ EMPLOYEE_FIELDS = (
 	"user_id",
 )
 
+LEAVE_FIELDS = (
+	"name",
+	"employee",
+	"employee_name",
+	"leave_type",
+	"from_date",
+	"to_date",
+	"total_leave_days",
+	"status",
+)
+
 
 def list_employees(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
 	limit = _bounded_limit(getattr(request, "args", {}).get("limit"))
@@ -27,6 +38,28 @@ def list_employees(frappe: Any, request: Any, *, request_id: str | None) -> dict
 	return {
 		"request_id": request_id,
 		"items": [_employee_payload(row) for row in rows],
+		"limit": limit,
+		"nextCursor": None,
+	}
+
+
+def list_leaves(frappe: Any, request: Any, *, request_id: str | None) -> dict[str, Any]:
+	args = getattr(request, "args", {})
+	limit = _bounded_limit(args.get("limit"))
+	filters = {}
+	employee_id = args.get("employeeId")
+	if employee_id:
+		filters["employee"] = employee_id
+	rows = frappe.get_all(
+		"Leave Application",
+		fields=list(LEAVE_FIELDS),
+		filters=filters,
+		order_by="from_date desc, modified desc",
+		limit_page_length=limit,
+	)
+	return {
+		"request_id": request_id,
+		"items": [_leave_payload(row) for row in rows],
 		"limit": limit,
 		"nextCursor": None,
 	}
@@ -74,3 +107,20 @@ def _employee_payload(row: dict[str, Any]) -> dict[str, Any]:
 		"designation": row.get("designation"),
 		"userId": row.get("user_id"),
 	}
+
+
+def _leave_payload(row: dict[str, Any]) -> dict[str, Any]:
+	return {
+		"leaveId": row.get("name"),
+		"employeeId": row.get("employee"),
+		"employeeName": row.get("employee_name"),
+		"leaveType": row.get("leave_type"),
+		"fromDate": _string_value(row.get("from_date")),
+		"toDate": _string_value(row.get("to_date")),
+		"totalDays": row.get("total_leave_days"),
+		"status": row.get("status"),
+	}
+
+
+def _string_value(value: object) -> object:
+	return value.isoformat() if hasattr(value, "isoformat") else value
