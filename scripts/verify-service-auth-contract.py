@@ -12,6 +12,8 @@ REQUIRED_FILES = [
     "docs/SERVICE_AUTH_INTEGRATION.md",
     "docs/contracts/hrms-service-api.md",
     "docs/openapi/hrms-service-api.openapi.yaml",
+    "hrms/service_auth/verifier.py",
+    "hrms/service_auth/tests/test_verifier.py",
     "hrms/api/__init__.py",
     "hrms/api/oauth.py",
     "hrms/api/roster.py",
@@ -20,21 +22,23 @@ REQUIRED_FILES = [
 
 REQUIRED_DOC_TOKENS = {
     "docs/SERVICE_AUTH_INTEGRATION.md": [
-        "CONTRACT LOCKED; NOT WIRED YET",
+        "CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET",
         "audience is:",
         "hrms",
         "fail closed",
         "/api/v1/service/hrms/*",
         "hrms:employee.read",
         "hrms:attendance.write",
+        "hrms/service_auth/verifier.py",
     ],
     "docs/contracts/hrms-service-api.md": [
-        "CONTRACT LOCKED; NOT WIRED YET",
+        "CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET",
         "https://api.dhruvantasystems.net/hrms/api",
         "not by exposing broad upstream admin credentials",
         "workspace_pending",
         "permission_denied",
         "Idempotency-Key",
+        "hrms/service_auth/verifier.py",
     ],
     "docs/openapi/hrms-service-api.openapi.yaml": [
         "operationId: listHrmsEmployees",
@@ -63,6 +67,12 @@ REQUIRED_SOURCE_TOKENS = {
     ],
     "hrms/api/oauth.py": ["allow_guest=True", "def oauth_providers"],
     "hrms/api/system_settings.py": ["allow_guest=True", "def get_user_pass_login_disabled"],
+    "hrms/service_auth/verifier.py": [
+        "EXPECTED_AUDIENCE = \"hrms\"",
+        "algorithms=[\"ES256\"]",
+        "required_scope",
+        "insufficient_scope",
+    ],
 }
 
 FORBIDDEN_LIVE_CLAIMS = [

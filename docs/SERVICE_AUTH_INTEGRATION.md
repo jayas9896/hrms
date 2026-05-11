@@ -1,6 +1,6 @@
 # Dhruvanta HRMS Service Auth Integration
 
-Status: **CONTRACT LOCKED; NOT WIRED YET**.
+Status: **CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET**.
 
 Dhruvanta HRMS currently serves the Frappe HR application and whitelisted Frappe methods through the gateway path:
 
@@ -9,6 +9,12 @@ https://api.dhruvantasystems.net/hrms/api
 ```
 
 Those current endpoints use Frappe session/API-key behavior, not Dhruvanta ES256 service-client JWT verification.
+
+The framework-neutral verifier core now lives in
+`hrms/service_auth/verifier.py`. It validates ES256 tokens from the service
+control plane, audience `hrms`, expiry, JWKS `kid`, and endpoint scopes. The
+Frappe request hook, JWKS discovery/cache, and `/api/v1/service/hrms/*`
+handlers are still not wired.
 
 ## Locked Dhruvanta Service Contract
 
@@ -66,9 +72,9 @@ Frontend engineers must treat this current surface as Frappe-session based. Cust
 
 Before changing the status from contract-locked to live:
 
-1. Add a dedicated service-auth verifier that validates SCP ES256 JWTs, audience `hrms`, scopes, expiry, and `kid` refresh.
+1. Mount the dedicated service-auth verifier from `hrms/service_auth/verifier.py`
+   in a Frappe request hook with JWKS discovery/cache and `kid` refresh.
 2. Add explicit route handlers for `/api/v1/service/hrms/*`.
 3. Add source tests for 401 missing-token, 401 wrong-audience, 403 missing-scope, and success.
 4. Add OpenAPI examples and curl smoke commands.
 5. Update the governance registry and repo log in the same slice.
-

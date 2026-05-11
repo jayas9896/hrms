@@ -1,6 +1,7 @@
 # Dhruvanta HRMS Backend API Contract
 
-Status: **CONTRACT LOCKED; NOT WIRED YET** for `/api/v1/service/hrms/*`.
+Status: **CONTRACT LOCKED; VERIFIER CORE SOURCE-READY; NOT WIRED YET** for
+`/api/v1/service/hrms/*`.
 
 This document is the backend-first contract for Dhruvanta HRMS. It records what frontend shells can assume today and what backend routes must provide before HRMS is marked self-service in Dhruvanta One.
 
@@ -28,6 +29,10 @@ GET /api/method/hrms.api.oauth.oauth_providers
 ```
 
 Authenticated calls require the current Frappe session/API-key mechanism. Guest calls are limited to login discovery helpers.
+
+The ES256/JWKS/scope verifier core is source-ready in
+`hrms/service_auth/verifier.py`, but the Frappe request hook, JWKS
+discovery/cache, and service handlers are not mounted yet.
 
 ## Future Dhruvanta Service API
 
